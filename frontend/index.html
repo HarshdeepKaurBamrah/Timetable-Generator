@@ -68,6 +68,12 @@ input,select,textarea{font-family:var(--font)}
 .nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
 .notif-badge{background:var(--coral);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:auto;min-width:18px;text-align:center}
 .sidebar-bottom{margin-top:auto;padding:14px 16px;border-top:1px solid var(--border)}
+.credit-note{font-size:11px;line-height:1.7;color:var(--faint)}
+.credit-note strong{color:var(--text);font-weight:600}
+.credit-kicker{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+.credit-heart{display:inline-block;filter:drop-shadow(0 0 10px rgba(255,95,126,.18))}
+.credit-team{margin-top:4px}
+.sidebar-credit{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,.08)}
 .user-chip strong{color:var(--text);display:block;font-size:13px;font-weight:600}
 .user-chip span{font-size:11px;color:var(--muted)}
 .content{flex:1;overflow-y:auto}
@@ -221,6 +227,9 @@ tbody tr:hover{background:rgba(255,255,255,.015)}
 .landing-hero p{font-size:17px;color:var(--muted);line-height:1.7;margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
 .landing-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:70px}
 .landing-features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:0 auto;padding:0 60px 80px;text-align:left}
+.landing-credit{max-width:960px;margin:0 auto;padding:0 60px 48px;text-align:center}
+.landing-credit .credit-note{display:inline-block;padding:14px 20px;border:1px solid rgba(255,255,255,.08);border-radius:999px;background:rgba(255,255,255,.03);backdrop-filter:blur(8px)}
+.landing-credit .credit-team{margin-top:2px}
 .feature-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px}
 .feature-icon{font-size:28px;margin-bottom:14px}
 .feature-title{font-size:15px;font-weight:600;margin-bottom:8px}
@@ -241,6 +250,7 @@ tbody tr:hover{background:rgba(255,255,255,.015)}
   .page{padding:16px}
   .landing-hero h1{font-size:36px}
   .landing-features{grid-template-columns:1fr;padding:0 20px 40px}
+  .landing-credit{padding:0 20px 32px}
   .landing-nav{padding:16px 20px}
   .landing-hero{padding:50px 20px 30px}
 }
@@ -298,6 +308,12 @@ tbody tr:hover{background:rgba(255,255,255,.015)}
       <div class="feature-icon">⬇️</div>
       <div class="feature-title">Excel Export</div>
       <div class="feature-desc">Download the full timetable as a formatted Excel workbook with all divisions, workload summary and change log.</div>
+    </div>
+  </div>
+  <div class="landing-credit">
+    <div class="credit-note">
+      <div class="credit-kicker">Crafted with <span class="credit-heart" aria-hidden="true">❤️</span> by</div>
+      <div class="credit-team"><strong>Harshdeep Bamrah, Vishvesh Paturkar, and Epshita Ninawe</strong></div>
     </div>
   </div>
 </div>
@@ -373,6 +389,10 @@ tbody tr:hover{background:rgba(255,255,255,.015)}
     <div class="sidebar-bottom">
       <div class="user-chip"><strong id="c-name">Coordinator</strong><span>Timetable Admin</span></div>
       <button class="btn btn-ghost btn-sm w-full" onclick="doLogout()" style="margin-top:8px">Sign Out</button>
+      <div class="credit-note sidebar-credit">
+        <div class="credit-kicker">Crafted with <span class="credit-heart" aria-hidden="true">❤️</span> by</div>
+        <div class="credit-team"><strong>Harshdeep Bamrah, Vishvesh Paturkar, and Epshita Ninawe</strong></div>
+      </div>
     </div>
   </div>
   <div class="content">
@@ -797,6 +817,10 @@ tbody tr:hover{background:rgba(255,255,255,.015)}
     <div class="sidebar-bottom">
       <div class="user-chip"><strong id="f-name">Faculty</strong><span id="f-role">Faculty Member</span></div>
       <button class="btn btn-ghost btn-sm w-full" onclick="doLogout()" style="margin-top:8px">Sign Out</button>
+      <div class="credit-note sidebar-credit">
+        <div class="credit-kicker">Crafted with <span class="credit-heart" aria-hidden="true">❤️</span> by</div>
+        <div class="credit-team"><strong>Harshdeep Bamrah, Vishvesh Paturkar, and Epshita Ninawe</strong></div>
+      </div>
     </div>
   </div>
   <div class="content">
