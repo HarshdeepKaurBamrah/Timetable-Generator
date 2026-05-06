@@ -1,0 +1,14 @@
+.git
+.pytest_cache
+.venv
+.vscode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+backup/
+backup.zip
+selenium_screenshots/
+server-5002.log
+server-5003.log

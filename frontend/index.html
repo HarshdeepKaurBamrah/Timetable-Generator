@@ -1,0 +1,3298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Academic Timetable System</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0F1A;--surface:#131929;--surface2:#1A2236;--surface3:#212D45;
+  --border:#2A3554;--border2:#374260;
+  --accent:#4F7EF7;--accent2:#7C4DFF;--green:#00C896;--amber:#FFB830;
+  --coral:#FF5F7E;--teal:#00BCD4;--purple:#B39DDB;
+  --text:#E8EDF8;--muted:#7A88AA;--faint:#3D4D6A;
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:10px;--r2:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+button{cursor:pointer;font-family:var(--font)}
+input,select,textarea{font-family:var(--font)}
+.hidden{display:none!important}
+.view{display:none}.view.active{display:block}
+
+/* ─ Buttons ─ */
+.btn{padding:10px 20px;border-radius:var(--r2);font-size:13px;font-weight:600;border:none;transition:all .18s;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#3a6de0;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--border2)}
+.btn-success{background:var(--green);color:#000;font-weight:700}.btn-success:hover{filter:brightness(1.1)}
+.btn-danger{background:var(--coral);color:#fff}.btn-danger:hover{filter:brightness(1.1)}
+.btn-amber{background:var(--amber);color:#000;font-weight:600}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:4px}
+.w-full{width:100%;justify-content:center}
+
+/* ─ Forms ─ */
+.field{margin-bottom:15px}
+.label{display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:9px 12px;font-size:13px;color:var(--text);outline:none;transition:border .2s}
+.input:focus{border-color:var(--accent)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-field{display:flex;flex-direction:column}
+.toggle-row{display:flex;align-items:center;gap:10px;font-size:13px;padding:5px 0;cursor:pointer}
+.toggle{width:38px;height:22px;border-radius:11px;background:var(--faint);position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s}
+.toggle.on::after{transform:translateX(16px)}
+
+/* Subject multi-select as checkboxes */
+.subject-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r2);padding:8px;background:var(--surface2)}
+.subject-check{display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 6px;border-radius:4px;transition:background .1s}
+.subject-check:hover{background:rgba(255,255,255,.05)}
+.subject-check input{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+
+/* ─ Shell ─ */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:228px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:18px 20px 16px;border-bottom:1px solid var(--border)}
+.brand-logo{display:block;object-fit:contain;flex-shrink:0;background:#fff}
+.sidebar-logo .brand-logo{width:34px;height:34px;border-radius:9px;padding:3px;border:1px solid var(--border);box-shadow:0 8px 18px rgba(0,0,0,.18)}
+.logo-mark{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+.sidebar-logo span{font-size:13px;font-weight:600;line-height:1.3}
+.nav-group-label{font-size:10px;font-weight:600;color:var(--faint);letter-spacing:.8px;text-transform:uppercase;padding:14px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;border-left:3px solid transparent;user-select:none}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.02)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(79,126,247,.07)}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.notif-badge{background:var(--coral);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:auto;min-width:18px;text-align:center}
+.sidebar-bottom{margin-top:auto;padding:14px 16px;border-top:1px solid var(--border)}
+.user-chip strong{color:var(--text);display:block;font-size:13px;font-weight:600}
+.user-chip span{font-size:11px;color:var(--muted)}
+.content{flex:1;overflow-y:auto}
+.page{display:none;padding:28px 32px;max-width:1400px}
+.page.active{display:block}
+.page-title{font-size:22px;font-weight:700;letter-spacing:-.5px;margin-bottom:2px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+
+/* ─ Cards ─ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.card-title{font-size:13px;font-weight:600;margin-bottom:16px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.stat-val{font-size:28px;font-weight:700;letter-spacing:-1px}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+
+/* ─ Table ─ */
+.table-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--surface2);padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:9px 12px;border-bottom:1px solid rgba(42,53,84,.5);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.015)}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--mono);letter-spacing:.3px}
+.tag-lec{background:rgba(79,126,247,.15);color:#7DA8FF}
+.tag-tut{background:rgba(179,157,219,.15);color:#B39DDB}
+.tag-lab{background:rgba(0,200,150,.15);color:#00C896}
+.tag-ok{background:rgba(0,200,150,.15);color:#00C896}
+.tag-amber{background:rgba(255,184,48,.15);color:#FFB830}
+.tag-err{background:rgba(255,95,126,.15);color:#FF5F7E}
+.tag-coord{background:rgba(79,126,247,.15);color:#7DA8FF}
+.tag-fac{background:rgba(179,157,219,.15);color:#B39DDB}
+
+/* ─ Timetable grid ─ */
+.tt-shell{display:flex;flex-direction:column;gap:24px}
+.tt-board{background:linear-gradient(180deg,rgba(26,34,54,.94),rgba(11,15,26,.98));border:1px solid var(--border);border-radius:18px;padding:18px 18px 14px;box-shadow:0 18px 50px rgba(0,0,0,.2)}
+.tt-board-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.tt-board-kicker{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent)}
+.tt-board-title{font-size:18px;font-weight:700;letter-spacing:-.4px}
+.tt-board-meta{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.tt-scroll{overflow:auto;padding-bottom:4px}
+.tt-table{border-collapse:separate;border-spacing:0;font-size:12px;min-width:1040px;width:100%;background:rgba(8,12,20,.88);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.tt-table th{background:rgba(33,45,69,.95);padding:12px 10px;text-align:center;font-size:10px;font-weight:700;color:var(--muted);border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:.7px;text-transform:uppercase}
+.tt-table th:last-child{border-right:none}
+.tt-table th.day-hdr{background:rgba(19,25,41,.96);min-width:112px}
+.tt-table td{border-right:1px solid rgba(42,53,84,.7);border-bottom:1px solid rgba(42,53,84,.7);padding:0;vertical-align:top;min-width:184px;background:rgba(11,15,26,.96)}
+.tt-table tr:last-child td{border-bottom:none}
+.tt-table td:last-child{border-right:none}
+.tt-clickable{cursor:pointer;transition:background .18s ease}
+.tt-clickable:hover{background:rgba(79,126,247,.05)}
+.tt-draggable{cursor:grab}
+.tt-draggable:active{cursor:grabbing}
+.tt-drop-target{outline:2px dashed rgba(99,210,255,.55);outline-offset:-4px}
+.tt-dragging{opacity:.62}
+.tt-cell{padding:0;height:100%;display:block;transition:filter .15s}
+.tt-top{font-size:13px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.tt-teacher{font-size:11px;color:var(--muted);line-height:1.45;font-family:var(--mono);overflow-wrap:anywhere;white-space:normal}
+.tt-meta{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:auto}
+.tt-room{font-size:10px;color:var(--text);font-family:var(--mono);overflow-wrap:anywhere;white-space:normal;opacity:.85}
+.tt-lab-summary{font-size:11px;color:var(--muted);line-height:1.5}
+.tt-lab-assignments{display:flex;flex-direction:column;gap:6px}
+.tt-lab-assignment{display:flex;justify-content:space-between;gap:10px;font-size:11px;line-height:1.45}
+.tt-lab-assignment span:last-child{color:var(--muted);text-align:right}
+.tt-day{background:rgba(19,25,41,.98);padding:14px 10px;text-align:center;font-size:11px;font-weight:800;color:#D7E1F7;letter-spacing:.8px;text-transform:uppercase;vertical-align:middle}
+.tt-slot-stack{display:flex;flex-direction:column;gap:10px;padding:10px;min-height:138px}
+.tt-slot-card{position:relative;padding:12px 12px 11px;min-height:108px;border-radius:14px;display:flex;flex-direction:column;gap:10px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.tt-slot-head{display:flex;flex-direction:column;gap:6px}
+.tt-slot-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.tt-badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.tt-empty{display:flex;align-items:center;justify-content:center;min-height:138px;color:var(--faint);font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+.tt-break-cell{display:flex;align-items:center;justify-content:center;min-height:138px;background:linear-gradient(135deg,rgba(255,184,48,.08),rgba(19,25,41,.96));color:var(--amber);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.tt-pin{display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.08);font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);flex-shrink:0}
+.sc-0{background:rgba(79,126,247,.10);border-left:3px solid #4F7EF7}
+.sc-1{background:rgba(0,200,150,.09);border-left:3px solid #00C896}
+.sc-2{background:rgba(255,184,48,.09);border-left:3px solid #FFB830}
+.sc-3{background:rgba(179,157,219,.09);border-left:3px solid #B39DDB}
+.sc-4{background:rgba(0,188,212,.09);border-left:3px solid #00BCD4}
+.sc-5{background:rgba(255,95,126,.09);border-left:3px solid #FF5F7E}
+.sc-6{background:rgba(255,138,101,.09);border-left:3px solid #FF8A65}
+.sc-7{background:rgba(129,199,132,.09);border-left:3px solid #81C784}
+.sc-lab{background:rgba(0,200,150,.06);border-left:3px solid #00C896;background-image:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(0,200,150,.04) 4px,rgba(0,200,150,.04) 8px)}
+.sc-empty{background:transparent}
+.locked-mark{position:absolute;top:3px;right:4px;font-size:9px}
+.tt-cell-wrap{position:relative;height:100%}
+.gen-progress{margin:14px 0 18px;padding:16px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,rgba(19,25,41,.96),rgba(11,15,26,.96))}
+.gen-progress-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:10px}
+.gen-progress-title{font-size:14px;font-weight:700}
+.gen-progress-sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+.gen-progress-meta{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.gen-progress-track{width:100%;height:10px;border-radius:999px;background:rgba(255,255,255,.05);overflow:hidden;border:1px solid rgba(255,255,255,.04)}
+.gen-progress-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),#63D2FF);transition:width .25s ease}
+.gen-stage-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}
+.gen-stage{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)}
+.gen-stage-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.gen-stage-desc{font-size:12px;margin-top:4px;color:var(--text);line-height:1.5}
+.gen-stage.done{border-color:rgba(0,200,150,.24);background:rgba(0,200,150,.09)}
+.gen-stage.active{border-color:rgba(79,126,247,.34);background:rgba(79,126,247,.11)}
+.gen-stage.pending{opacity:.72}
+
+/* ─ Alerts ─ */
+.alert{padding:10px 14px;border-radius:var(--r2);font-size:13px;margin-bottom:12px;line-height:1.5}
+.alert-success{background:rgba(0,200,150,.12);color:var(--green);border:1px solid rgba(0,200,150,.25)}
+.alert-err{background:rgba(255,95,126,.12);color:var(--coral);border:1px solid rgba(255,95,126,.25)}
+.alert-info{background:rgba(79,126,247,.12);color:#7DA8FF;border:1px solid rgba(79,126,247,.25)}
+.alert-warn{background:rgba(255,184,48,.12);color:var(--amber);border:1px solid rgba(255,184,48,.25)}
+
+/* ─ Modal ─ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:1000}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* ─ Tabs ─ */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ─ Notifications ─ */
+.notif-list{display:flex;flex-direction:column;gap:10px}
+.notif-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:border .15s}
+.notif-card.unread{border-color:rgba(79,126,247,.5)}
+.notif-card.slot_free{border-left:4px solid var(--green)}
+.notif-card.slot_claimed{border-left:4px solid var(--amber)}
+.notif-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.notif-msg{font-size:12px;color:var(--muted);line-height:1.6}
+.notif-slot-info{background:var(--surface2);border-radius:6px;padding:8px 12px;margin-top:8px;font-size:12px;display:flex;flex-wrap:wrap;gap:10px}
+.notif-actions{display:flex;gap:8px;margin-top:10px}
+
+/* ─ Constraint chips ─ */
+.constraint-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:8px 12px;font-size:12px}
+.constraint-type{font-family:var(--mono);color:var(--accent);font-size:11px;flex-shrink:0}
+
+/* Loading */
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:40px;color:var(--muted);font-size:13px}
+.empty-state{text-align:center;padding:30px;color:var(--muted);font-size:13px}
+
+/* ════════════════════════════════
+   LANDING PAGE
+   ════════════════════════════════ */
+#view-landing{min-height:100vh;background:radial-gradient(ellipse at 20% 20%,rgba(79,126,247,.15) 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,rgba(124,77,255,.12) 0%,transparent 50%),var(--bg)}
+.landing-nav{display:flex;align-items:center;justify-content:space-between;padding:20px 60px;border-bottom:1px solid rgba(255,255,255,.06)}
+.landing-logo{display:flex;align-items:center;gap:12px}
+.landing-logo .brand-logo{width:42px;height:42px;border-radius:12px;padding:4px;box-shadow:0 12px 26px rgba(0,0,0,.22)}
+.landing-logo span{font-size:16px;font-weight:700}
+.landing-nav-actions{display:flex;gap:10px}
+.landing-hero{max-width:900px;margin:0 auto;padding:80px 60px 60px;text-align:center}
+.landing-hero h1{font-size:56px;font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,#fff 40%,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.landing-hero p{font-size:17px;color:var(--muted);line-height:1.7;margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto}
+.landing-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:70px}
+.landing-features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:0 auto;padding:0 60px 80px;text-align:left}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.feature-icon{font-size:28px;margin-bottom:14px}
+.feature-title{font-size:15px;font-weight:600;margin-bottom:8px}
+.feature-desc{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ════════════════════════════════
+   AUTH MODAL (pops over landing)
+   ════════════════════════════════ */
+#auth-modal .modal{width:420px}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.auth-tab{padding:10px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.auth-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  .sidebar{width:200px}
+  .page{padding:16px}
+  .landing-hero h1{font-size:36px}
+  .landing-features{grid-template-columns:1fr;padding:0 20px 40px}
+  .landing-nav{padding:16px 20px}
+  .landing-hero{padding:50px 20px 30px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LANDING PAGE ═══════════ -->
+<div id="view-landing" class="view active">
+  <nav class="landing-nav">
+    <div class="landing-logo">
+      <img class="brand-logo" src="/static/pict_logo.jpg" alt="PICT logo">
+      <span>PICT Timetable System</span>
+    </div>
+    <div class="landing-nav-actions">
+      <button class="btn btn-ghost btn-sm" onclick="openAuth('login')">Sign In</button>
+      <button class="btn btn-primary btn-sm" onclick="openAuth('signup')">Get Started</button>
+    </div>
+  </nav>
+  <div class="landing-hero">
+    <h1>Academic Timetable<br>Made Intelligent</h1>
+    <p>Automatically generate conflict-free timetables for multiple divisions, shared faculty, and batch lab sessions — with real-time updates when anything changes.</p>
+    <div class="landing-cta">
+      <button class="btn btn-primary" style="padding:13px 32px;font-size:15px" onclick="openAuth('signup')">âš¡ Get Started Free</button>
+      <button class="btn btn-ghost" style="padding:13px 32px;font-size:15px" onclick="openAuth('login')">Sign In →</button>
+    </div>
+  </div>
+  <div class="landing-features">
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <div class="feature-title">CSP Algorithm</div>
+      <div class="feature-desc">Backtracking solver with Most-Constrained Variable ordering. Zero teacher or room conflicts guaranteed across all divisions.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔄</div>
+      <div class="feature-title">Real-Time Changes</div>
+      <div class="feature-desc">Move slots, swap classes, handle teacher absences — automatic cascade resolution and faculty notifications.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">Faculty Notifications</div>
+      <div class="feature-desc">When a class is freed, all faculty get an alert. First to click "Claim" gets the slot — no double assignments.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏷️</div>
+      <div class="feature-title">Batch Lab Scheduling</div>
+      <div class="feature-desc">Each batch gets its own lab teacher and time. Labs auto-placed in any free lab room as 2 consecutive hours.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <div class="feature-title">Smart Room Allocation</div>
+      <div class="feature-desc">Back-to-back lectures stay in the same classroom. Labs use any available lab. No fixed rooms needed per division.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⬇️</div>
+      <div class="feature-title">Excel Export</div>
+      <div class="feature-desc">Download the full timetable as a formatted Excel workbook with all divisions, workload summary and change log.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ AUTH MODAL ═══════════ -->
+<div id="auth-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeAuth()">
+  <div class="modal">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="atab-login" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="auth-tab" id="atab-signup" onclick="switchAuthTab('signup')">Create Account</div>
+    </div>
+
+    <!-- Login form -->
+    <div id="auth-login">
+      <div id="login-msg"></div>
+      <div class="field"><label class="label">Email</label>
+        <input class="input" id="l-email" type="email" placeholder="your@college.edu" autocomplete="email"
+               onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="field"><label class="label">Password</label>
+        <input class="input" id="l-pw" type="password" placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-primary w-full" onclick="doLogin()">Sign In</button>
+      <p style="font-size:11px;color:var(--faint);text-align:center;margin-top:14px">
+        Default coordinator: admin@college.edu / admin123<br>
+        Faculty password: faculty123 (set when adding teacher)
+      </p>
+    </div>
+
+    <!-- Signup form -->
+    <div id="auth-signup" class="hidden">
+      <div id="signup-msg"></div>
+      <div class="field"><label class="label">Full Name</label>
+        <input class="input" id="s-name" placeholder="Prof. A. Sharma"></div>
+      <div class="field"><label class="label">Email</label>
+        <input class="input" id="s-email" type="email" placeholder="your@college.edu"></div>
+      <div class="field"><label class="label">Password (min 6 characters)</label>
+        <input class="input" id="s-pw" type="password" placeholder="Choose a password"
+               onkeydown="if(event.key==='Enter')doSignup()"></div>
+      <div class="field"><label class="label">Role</label>
+        <select class="input" id="s-role">
+          <option value="coordinator">Coordinator (Timetable Admin)</option>
+          <option value="faculty">Faculty Member</option>
+        </select></div>
+      <button class="btn btn-primary w-full" onclick="doSignup()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ COORDINATOR ═══════════ -->
+<div id="view-coordinator" class="view">
+<div class="shell">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img class="brand-logo" src="/static/pict_logo.jpg" alt="PICT logo">
+      <span>PICT Timetable<br>System</span>
+    </div>
+    <div class="nav-group-label">Setup</div>
+    <div class="nav-item active" data-page="dashboard" onclick="cPage(this)"><span class="nav-icon">⬛</span>Dashboard</div>
+    <div class="nav-item" data-page="teachers" onclick="cPage(this)"><span class="nav-icon">👥</span>Teachers</div>
+    <div class="nav-item" data-page="rooms" onclick="cPage(this)"><span class="nav-icon">🏫</span>Rooms</div>
+    <div class="nav-item" data-page="subjects" onclick="cPage(this)"><span class="nav-icon">📚</span>Subjects</div>
+    <div class="nav-item" data-page="divisions" onclick="cPage(this)"><span class="nav-icon">🏷️</span>Divisions</div>
+    <div class="nav-item" data-page="batches" onclick="cPage(this)"><span class="nav-icon">👤</span>Batch Teachers</div>
+    <div class="nav-group-label">Timetable</div>
+    <div class="nav-item" data-page="generate" onclick="cPage(this)"><span class="nav-icon">âš¡</span>Generate</div>
+    <div class="nav-item" data-page="timetable" onclick="cPage(this)"><span class="nav-icon">📅</span>View Timetable</div>
+    <div class="nav-group-label">Manage</div>
+    <div class="nav-item" data-page="changes" onclick="cPage(this)"><span class="nav-icon">🔄</span>Changes</div>
+    <div class="nav-item" data-page="constraints" onclick="cPage(this)"><span class="nav-icon">⚙️</span>Constraints</div>
+    <div class="nav-item" data-page="changelog" onclick="cPage(this)"><span class="nav-icon">📋</span>Change Log</div>
+    <div class="nav-item" data-page="users" onclick="cPage(this)"><span class="nav-icon">🔐</span>Users</div>
+    <div class="nav-item" data-page="settings" onclick="cPage(this)"><span class="nav-icon">⚙️</span>Settings</div>
+    <div class="sidebar-bottom">
+      <div class="user-chip"><strong id="c-name">Coordinator</strong><span>Timetable Admin</span></div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="doLogout()" style="margin-top:8px">Sign Out</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div><div class="page-sub" id="dash-dept">Academic Timetable System</div>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val" id="s-t" style="color:var(--accent)">—</div><div class="stat-lbl">Teachers</div></div>
+        <div class="stat"><div class="stat-val" id="s-r" style="color:var(--green)">—</div><div class="stat-lbl">Rooms</div></div>
+        <div class="stat"><div class="stat-val" id="s-s" style="color:var(--amber)">—</div><div class="stat-lbl">Subjects</div></div>
+        <div class="stat"><div class="stat-val" id="s-d" style="color:var(--purple)">—</div><div class="stat-lbl">Divisions</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+        <div class="card"><div class="card-title">âš¡ Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-primary" onclick="cPage(document.querySelector('[data-page=generate]'))">âš¡ Generate Timetable</button>
+            <button class="btn btn-secondary" onclick="cPage(document.querySelector('[data-page=timetable]'))">📅 View Timetable</button>
+            <button class="btn btn-secondary" onclick="cPage(document.querySelector('[data-page=changes]'))">🔄 Make Changes</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">📋 Recent Changes</div>
+          <div id="dash-log" class="text-sm" style="color:var(--muted)">Loading…</div>
+        </div>
+        <div class="card"><div class="card-title">Cover Alerts</div>
+          <div id="dash-notifs" class="text-sm" style="color:var(--muted)">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teachers -->
+    <div id="page-teachers" class="page">
+      <div class="page-title">Teachers</div><div class="page-sub">Each teacher gets an automatic faculty login account.</div>
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
+        <div class="card"><div class="card-title" style="display:flex;justify-content:space-between">All Teachers <button class="btn btn-secondary btn-xs" onclick="loadTeachers()">↻</button></div>
+          <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Short</th><th>Email</th><th>Max/Day</th><th>Max/Wk</th><th></th></tr></thead>
+          <tbody id="teacher-tbody"><tr><td colspan="7" class="empty-state">No teachers yet</td></tr></tbody></table></div>
+        </div>
+        <div class="card"><div class="card-title">Add Teacher</div>
+          <div id="teacher-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Full Name *</label><input class="input" id="t-name" placeholder="Prof. A. Sharma"></div>
+            <div class="form-field"><label class="label">Short Name *</label><input class="input" id="t-short" placeholder="Sharma"></div>
+            <div class="form-field"><label class="label">Email (login) *</label><input class="input" id="t-email" type="email" placeholder="sharma@college.edu"></div>
+            <div class="form-field"><label class="label">ID (auto if blank)</label><input class="input" id="t-id" placeholder="e.g. T1"></div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Max hrs/day</label><input class="input" id="t-maxday" type="number" value="4" min="1" max="10"></div>
+              <div class="form-field"><label class="label">Max hrs/week</label><input class="input" id="t-maxweek" type="number" value="18" min="1" max="40"></div>
+            </div>
+            <button class="btn btn-primary w-full" onclick="addTeacher()">Add Teacher</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rooms -->
+    <div id="page-rooms" class="page">
+      <div class="page-title">Rooms</div><div class="page-sub">Rooms are allocated dynamically — no fixed room per division. Back-to-back lectures on same day use same room automatically.</div>
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+        <div class="card"><div class="card-title">All Rooms</div>
+          <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Capacity</th><th></th></tr></thead>
+          <tbody id="room-tbody"><tr><td colspan="5" class="empty-state">No rooms yet</td></tr></tbody></table></div>
+        </div>
+        <div class="card"><div class="card-title">Add Room</div>
+          <div id="room-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Room Name *</label><input class="input" id="r-name" placeholder="Room 101"></div>
+            <div class="form-field"><label class="label">Room ID (auto)</label><input class="input" id="r-id" placeholder="R101"></div>
+            <div class="form-field"><label class="label">Type *</label>
+              <select class="input" id="r-type"><option value="lecture">Lecture Hall</option><option value="lab">Laboratory</option></select></div>
+            <div class="form-field"><label class="label">Capacity</label><input class="input" id="r-cap" type="number" value="60" min="1"></div>
+            <button class="btn btn-primary w-full" onclick="addRoom()">Add Room</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subjects -->
+    <div id="page-subjects" class="page">
+      <div class="page-title">Subjects</div><div class="page-sub">Define lecture/lab hours per week. Lab hrs must be even (2 = 1 session×2hrs). Labs use any free lab room.</div>
+      <div style="display:grid;grid-template-columns:1fr 440px;gap:20px;align-items:start">
+        <div class="card"><div class="card-title">All Subjects</div>
+          <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Teacher</th><th>Lec/wk</th><th>Lab hrs/wk</th><th>Tut/wk</th><th></th></tr></thead>
+          <tbody id="subject-tbody"><tr><td colspan="7" class="empty-state">No subjects yet</td></tr></tbody></table></div>
+        </div>
+        <div class="card"><div class="card-title">Add Subject</div>
+          <div id="subject-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Subject Name *</label><input class="input" id="sj-name" placeholder="Data Structures"></div>
+              <div class="form-field"><label class="label">Short Name *</label><input class="input" id="sj-short" placeholder="DS"></div>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Code</label><input class="input" id="sj-code" placeholder="CS201"></div>
+              <div class="form-field"><label class="label">ID (auto)</label><input class="input" id="sj-id" placeholder="DS"></div>
+            </div>
+            <div class="form-field"><label class="label">Lecture Teacher *</label>
+              <select class="input" id="sj-teacher"><option value="">— select —</option></select></div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Lectures/week</label><input class="input" id="sj-lec" type="number" value="3" min="0" max="10"></div>
+              <div class="form-field"><label class="label">Tutorials/week</label><input class="input" id="sj-tut" type="number" value="0" min="0" max="5"></div>
+            </div>
+            <div class="toggle-row" onclick="toggleLab()">
+              <div class="toggle" id="lab-toggle"></div>
+              <span>Has Lab Sessions (2 hrs each)</span>
+            </div>
+            <div id="lab-fields" style="display:none;flex-direction:column;gap:10px">
+              <div class="alert alert-info">Lab hours per week must be even. Each session = 2 consecutive periods in any free lab room.</div>
+              <div class="form-field"><label class="label">Lab Hours Per Week *</label>
+                <input class="input" id="sj-labhrs" type="number" value="2" min="2" max="8" step="2"></div>
+              <div class="form-field"><label class="label">Default Lab Teacher *</label>
+                <select class="input" id="sj-labteacher"><option value="">— select —</option></select></div>
+              <p style="font-size:11px;color:var(--muted)">You can assign different teachers to each batch from the "Batch Teachers" page after adding the division.</p>
+            </div>
+            <button class="btn btn-primary w-full" onclick="addSubject()">Add Subject</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divisions -->
+    <div id="page-divisions" class="page">
+      <div class="page-title">Divisions</div><div class="page-sub">Create class sections. Select which subjects are taught in this division. Batches are auto-created for lab scheduling.</div>
+      <div style="display:grid;grid-template-columns:1fr 400px;gap:20px;align-items:start">
+        <div class="card"><div class="card-title">All Divisions</div>
+          <div id="div-list" style="display:flex;flex-direction:column;gap:10px"><div class="empty-state">No divisions yet</div></div>
+        </div>
+        <div class="card"><div class="card-title">Add Division</div>
+          <div id="div-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Division Name *</label><input class="input" id="d-name" placeholder="Division A"></div>
+              <div class="form-field"><label class="label">Division ID *</label><input class="input" id="d-id" placeholder="A"></div>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Student Count</label><input class="input" id="d-size" type="number" value="60" min="1"></div>
+              <div class="form-field"><label class="label">Number of Batches</label><input class="input" id="d-batches" type="number" value="4" min="1" max="10" oninput="updateBatchNameFields()"></div>
+            </div>
+            <div class="form-field">
+              <label class="label">Batch Names <span style="font-weight:400;color:var(--muted)">(optional — leave blank for defaults)</span></label>
+              <div id="d-batch-names" style="display:flex;flex-direction:column;gap:6px;margin-top:4px"></div>
+            </div>
+            <div class="form-field">
+              <label class="label">Subjects (tick all that apply) *</label>
+              <div class="subject-grid" id="d-subjects-grid"></div>
+              <p style="font-size:11px;color:var(--muted);margin-top:6px">Tick subjects taught in this division</p>
+            </div>
+            <button class="btn btn-primary w-full" onclick="addDivision()">Add Division</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch Teachers -->
+    <div id="page-batches" class="page">
+      <div class="page-title">Batch Teachers</div>
+      <div class="page-sub">Assign a specific lab teacher to each batch for each subject. If not set, the subject's default lab teacher is used.</div>
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
+        <div class="card"><div class="card-title">Current Batch-Teacher Assignments</div>
+          <div class="table-wrap"><table><thead><tr><th>Division</th><th>Batch</th><th>Subject</th><th>Teacher</th><th></th></tr></thead>
+          <tbody id="bt-tbody"><tr><td colspan="5" class="empty-state">No custom assignments</td></tr></tbody></table></div>
+        </div>
+        <div class="card"><div class="card-title">Assign Teacher to Batch</div>
+          <div id="bt-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Division</label>
+              <select class="input" id="bt-div" onchange="updateBatchList()"></select></div>
+            <div class="form-field"><label class="label">Batch</label>
+              <select class="input" id="bt-batch"></select></div>
+            <div class="form-field"><label class="label">Subject (lab subjects only)</label>
+              <select class="input" id="bt-subject"></select></div>
+            <div class="form-field"><label class="label">Teacher</label>
+              <select class="input" id="bt-teacher"></select></div>
+            <button class="btn btn-primary w-full" onclick="addBatchTeacher()">Assign Teacher</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <div id="page-generate" class="page">
+      <div class="page-title">Generate Timetable</div><div class="page-sub">Run the deterministic scheduler and watch each stage while the weekly timetable is being built</div>
+      <div style="max-width:760px">
+        <div class="card">
+          <div class="card-title">âš¡ CSP Backtracking Solver</div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:18px">
+            <strong style="color:var(--text)">How it works:</strong><br>
+            1. Subjects spread across the week (penalty for same-day repeats)<br>
+            2. Back-to-back lectures on the same day get the same room automatically<br>
+            3. Labs placed as 2 consecutive periods in any free lab room<br>
+            4. Each batch uses its assigned teacher (or default lab teacher)<br>
+            5. Zero teacher/room conflicts guaranteed via global ledger
+          </p>
+          <div class="alert alert-warn" style="margin-bottom:16px">âš  Generating replaces the current timetable.</div>
+          <div id="gen-msg"></div>
+          <div id="gen-error-panel"></div>
+          <div id="gen-progress-panel" class="hidden"></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary" id="gen-btn" onclick="doGenerate()">âš¡ Generate Now</button>
+            <button class="btn btn-danger btn-sm" onclick="doClear()">🗑 Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timetable -->
+    <div id="page-timetable" class="page">
+      <div class="page-title">Timetable</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <select class="input" id="tt-div" onchange="renderTimetable()" style="width:200px"></select>
+        <select class="input" id="tt-orientation" onchange="changeTimetableOrientation()" style="width:220px">
+          <option value="days_horizontal">Days Horizontal</option>
+          <option value="days_vertical">Days Vertical</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadAndRenderTimetable()">↻ Refresh</button>
+        <button class="btn btn-success btn-sm" onclick="exportExcel()">⬇ Excel</button>
+      </div>
+      <div id="tt-msg"></div>
+      <div id="tt-problem-panel"></div>
+      <div id="tt-container"></div>
+    </div>
+
+    <!-- Changes -->
+    <div id="page-changes" class="page">
+      <div class="page-title">Runtime Changes</div><div class="page-sub">All changes are conflict-checked before applying.</div>
+      <div class="tabs">
+        <div class="tab active" onclick="changeTab(this,'ct-move')">Move Slot</div>
+        <div class="tab" onclick="changeTab(this,'ct-swap')">Swap</div>
+        <div class="tab" onclick="changeTab(this,'ct-absent')">Absent</div>
+        <div class="tab" onclick="changeTab(this,'ct-reteacher')">Change Teacher</div>
+      </div>
+      <div style="max-width:520px">
+        <div id="ct-move" class="card">
+          <div class="card-title">Move a Slot</div><div id="move-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Division</label><select class="input" id="mv-div" onchange="loadSlots('mv')"></select></div>
+            <div class="form-field"><label class="label">Slot to Move</label><select class="input" id="mv-slot"></select></div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">New Day</label><select class="input" id="mv-day"></select></div>
+              <div class="form-field"><label class="label">New Period</label><select class="input" id="mv-period"></select></div>
+            </div>
+            <button class="btn btn-secondary" onclick="checkMoveFeasible()">Check Feasible</button>
+            <button class="btn btn-primary" onclick="doMove()">Move Slot</button>
+          </div>
+        </div>
+        <div id="ct-swap" class="card hidden">
+          <div class="card-title">Swap Two Slots</div><div id="swap-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Division</label><select class="input" id="sw-div" onchange="loadSlots('sw')"></select></div>
+            <div class="form-field"><label class="label">Slot 1</label><select class="input" id="sw-s1"></select></div>
+            <div class="form-field"><label class="label">Slot 2</label><select class="input" id="sw-s2"></select></div>
+            <button class="btn btn-secondary" onclick="checkSwapFeasible()">Check Feasible</button>
+            <button class="btn btn-amber" onclick="doSwap()">↔ Swap</button>
+          </div>
+        </div>
+        <div id="ct-absent" class="card hidden">
+          <div class="card-title">Handle Teacher Absence</div>
+          <div class="alert alert-info" style="margin-bottom:14px">Absent sessions open for cover. Faculty can claim them, or the coordinator can assign any free faculty here.</div>
+          <div id="absent-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Teacher</label><select class="input" id="ab-teacher"></select></div>
+            <div class="form-field"><label class="label">Day</label><select class="input" id="ab-day"></select></div>
+            <div class="form-field"><label class="label">Period (blank = full day)</label><select class="input" id="ab-period"><option value="">Full Day</option></select></div>
+            <button class="btn btn-danger" onclick="doAbsent()">Mark Absent + Notify Faculty</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px">
+            <div class="card-title" style="margin:0">Open Cover Requests</div>
+            <button class="btn btn-secondary btn-xs" onclick="loadAdminAbsentNotifications()">↻ Refresh</button>
+          </div>
+          <div id="ab-open-list" style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+            <div class="empty-state">No open cover requests</div>
+          </div>
+        </div>
+        <div id="ct-reteacher" class="card hidden">
+          <div class="card-title">Change Teacher for a Slot</div><div id="rt-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Division</label><select class="input" id="rt-div" onchange="loadSlots('rt')"></select></div>
+            <div class="form-field"><label class="label">Slot</label><select class="input" id="rt-slot"></select></div>
+            <div class="form-field"><label class="label">New Teacher</label><select class="input" id="rt-teacher"></select></div>
+            <button class="btn btn-primary" onclick="doChangeTeacher()">Update Teacher</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Constraints -->
+    <div id="page-constraints" class="page">
+      <div class="page-title">Constraints</div><div class="page-sub">Extra rules for timetable generation. Regenerate after adding hard constraints.</div>
+      <div style="display:grid;grid-template-columns:1fr 420px;gap:20px;align-items:start">
+        <div class="card"><div class="card-title">Active Constraints</div>
+          <div id="constraint-list" style="display:flex;flex-direction:column;gap:8px"><div class="empty-state">No constraints</div></div>
+        </div>
+        <div class="card"><div class="card-title">Constraint Editor</div>
+          <div id="con-msg"></div>
+          <div id="con-validate-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <input type="hidden" id="con-edit-id">
+            <div class="form-field"><label class="label">Type</label><select class="input" id="con-type" onchange="updateConForm();previewConstraintValidation()"></select></div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Priority</label>
+                <select class="input" id="con-priority" onchange="updateConForm();previewConstraintValidation()">
+                  <option value="hard">Hard</option>
+                  <option value="soft">Soft</option>
+                </select></div>
+              <div class="form-field"><label class="label">Weight</label><input class="input" id="con-weight" type="number" value="10" min="1" oninput="previewConstraintValidation()"></div>
+            </div>
+            <div class="form-field"><label class="label">Target Scope</label>
+              <select class="input" id="con-scope" onchange="updateConForm();previewConstraintValidation()">
+                <option value="global">Global</option>
+                <option value="division">Division</option>
+                <option value="subject">Subject</option>
+                <option value="teacher">Teacher</option>
+                <option value="room">Room</option>
+                <option value="batch_group">Batch Group</option>
+              </select></div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Division Filter</label><select class="input" id="con-div" onchange="previewConstraintValidation()"><option value="">All divisions</option></select></div>
+              <div class="form-field"><label class="label">Subject Filter</label><select class="input" id="con-subj" onchange="previewConstraintValidation()"><option value="">All subjects</option></select></div>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Teacher Filter</label><select class="input" id="con-teacher" onchange="previewConstraintValidation()"><option value="">All teachers</option></select></div>
+              <div class="form-field"><label class="label">Room Filter</label><select class="input" id="con-room" onchange="previewConstraintValidation()"><option value="">All rooms</option></select></div>
+            </div>
+            <div id="con-batch-group-wrap" class="form-field hidden"><label class="label">Batch Group Id</label><input class="input" id="con-batch-group" placeholder="e.g. MDM-GRP" oninput="previewConstraintValidation()"></div>
+            <div id="con-subject-list-wrap" class="form-field hidden"><label class="label">Parallel Subjects</label><select class="input" id="con-subject-list" multiple style="height:100px" onchange="previewConstraintValidation()"></select></div>
+            <div id="con-parallel-wrap" class="form-grid hidden">
+              <div class="form-field"><label class="label">Group Name</label><input class="input" id="con-group-name" placeholder="e.g. MDM Group" oninput="previewConstraintValidation()"></div>
+              <div class="form-field"><label class="label">Sessions / Week</label><input class="input" id="con-session-count" type="number" min="1" oninput="previewConstraintValidation()"></div>
+            </div>
+            <div id="con-period-wrap" class="form-field"><label class="label">Periods (hold Ctrl for multi)</label>
+              <select class="input" id="con-periods" multiple style="height:90px" onchange="previewConstraintValidation()"></select></div>
+            <div id="con-day-wrap" class="form-field hidden"><label class="label">Days</label>
+              <select class="input" id="con-days" multiple style="height:90px" onchange="previewConstraintValidation()">
+                <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option>
+              </select></div>
+            <div id="con-val-wrap" class="form-field hidden"><label class="label" id="con-val-label">Max Per Day</label><input class="input" id="con-val" type="number" value="1" min="1" oninput="previewConstraintValidation()"></div>
+            <div class="toggle-row" onclick="document.getElementById('con-active').checked=!document.getElementById('con-active').checked;previewConstraintValidation()">
+              <input type="checkbox" id="con-active" checked style="width:16px;height:16px;accent-color:var(--accent)">
+              <span>Constraint is active</span>
+            </div>
+            <div class="form-field"><label class="label">Description *</label><input class="input" id="con-desc" placeholder="e.g. Algorithms only once per day" oninput="previewConstraintValidation()"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary w-full" onclick="saveConstraint()">Save Constraint</button>
+              <button class="btn btn-secondary" onclick="resetConstraintForm()">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Log -->
+    <div id="page-changelog" class="page">
+      <div class="page-title">Change Log</div><div class="page-sub">Full history of all modifications</div>
+      <div class="card">
+        <div class="table-wrap"><table><thead><tr><th>#</th><th>Time</th><th>Type</th><th>Description</th><th>By</th><th>Status</th></tr></thead>
+        <tbody id="log-tbody"><tr><td colspan="6" class="empty-state">No changes yet</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div id="page-users" class="page">
+      <div class="page-title">User Accounts</div><div class="page-sub">All faculty login accounts</div>
+      <div class="card">
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Teacher ID</th><th></th></tr></thead>
+        <tbody id="user-tbody"><tr><td colspan="5" class="empty-state">Loading…</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="page-settings" class="page">
+      <div class="page-title">Settings</div><div class="page-sub">Configure department info, time periods, and password</div>
+      <div style="max-width:640px;display:flex;flex-direction:column;gap:20px">
+        <div class="card"><div class="card-title">🏛️ Department Info</div>
+          <div id="settings-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Department Name</label><input class="input" id="cfg-dept"></div>
+            <div class="form-grid">
+              <div class="form-field"><label class="label">Academic Year</label><input class="input" id="cfg-ay"></div>
+              <div class="form-field"><label class="label">Semester</label><input class="input" id="cfg-sem"></div>
+            </div>
+            <div class="form-field"><label class="label">Break After Periods</label><input class="input" id="cfg-breaks" placeholder="e.g. P2,P4"></div>
+            <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">🕐 Period Configuration</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Each period = 1 hour. Lab sessions = 2 consecutive periods.</p>
+          <div id="period-editor" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-secondary btn-sm" onclick="addPeriodRow()">+ Add Period</button>
+            <button class="btn btn-primary btn-sm" onclick="savePeriods()">Save Periods</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-title">🔑 Change Password</div>
+          <div id="pw-msg"></div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div class="form-field"><label class="label">Current Password</label><input class="input" id="pw-old" type="password"></div>
+            <div class="form-field"><label class="label">New Password</label><input class="input" id="pw-new" type="password"></div>
+            <button class="btn btn-secondary btn-sm" onclick="changePassword()">Update</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- content -->
+</div><!-- shell -->
+</div><!-- coordinator -->
+
+<!-- ═══════════ FACULTY ═══════════ -->
+<div id="view-faculty" class="view">
+<div class="shell">
+  <div class="sidebar">
+    <div class="sidebar-logo"><img class="brand-logo" src="/static/pict_logo.jpg" alt="PICT logo"><span>PICT Timetable<br>System</span></div>
+    <div class="nav-group-label">My</div>
+    <div class="nav-item active" data-page="f-schedule" onclick="fPage(this)"><span class="nav-icon">📅</span>My Schedule</div>
+    <div class="nav-item" data-page="f-notifications" onclick="fPage(this)">
+      <span class="nav-icon">🔔</span>Notifications
+      <span class="notif-badge hidden" id="notif-badge">0</span>
+    </div>
+    <div class="nav-group-label">Actions</div>
+    <div class="nav-item" data-page="f-absent" onclick="fPage(this)"><span class="nav-icon">🏥</span>Report Absence</div>
+    <div class="nav-item" data-page="f-password" onclick="fPage(this)"><span class="nav-icon">🔑</span>Change Password</div>
+    <div class="sidebar-bottom">
+      <div class="user-chip"><strong id="f-name">Faculty</strong><span id="f-role">Faculty Member</span></div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="doLogout()" style="margin-top:8px">Sign Out</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="page-f-schedule" class="page active">
+      <div class="page-title">My Schedule</div><div class="page-sub" id="f-sched-sub">Your classes this week</div>
+      <div id="f-sched-grid"></div>
+    </div>
+    <div id="page-f-notifications" class="page">
+      <div class="page-title">Notifications</div><div class="page-sub">Free slot alerts — first to claim gets the class</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn btn-secondary btn-sm" onclick="loadNotifications()">↻ Refresh</button>
+        <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div id="f-notif-list" class="notif-list"><div class="loading"><div class="spinner"></div>Loading…</div></div>
+    </div>
+    <div id="page-f-absent" class="page">
+      <div class="page-title">Report Absence</div><div class="page-sub">Your slots will be auto-rescheduled if possible, otherwise freed for colleagues</div>
+      <div class="card" style="max-width:420px">
+        <div id="fa-msg"></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-field"><label class="label">Day</label><select class="input" id="fa-day"></select></div>
+          <div class="form-field"><label class="label">Period (blank = full day)</label><select class="input" id="fa-period"><option value="">Full Day</option></select></div>
+          <button class="btn btn-danger" onclick="doFacultyAbsent()">Report My Absence</button>
+        </div>
+      </div>
+    </div>
+    <div id="page-f-password" class="page">
+      <div class="page-title">Change Password</div>
+      <div class="card" style="max-width:380px">
+        <div id="fpw-msg"></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-field"><label class="label">Current Password</label><input class="input" id="fpw-old" type="password"></div>
+          <div class="form-field"><label class="label">New Password</label><input class="input" id="fpw-new" type="password"></div>
+          <button class="btn btn-primary" onclick="doFacultyChangePassword()">Update Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODALS ═══ -->
+<div id="slot-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('slot-modal')">
+  <div class="modal"><h2 id="sm-title"></h2><div class="modal-sub" id="sm-sub"></div>
+    <div id="sm-body"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('slot-modal')">Close</button></div>
+  </div>
+</div>
+<div id="pw-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeModal('pw-modal')">
+  <div class="modal"><h2>Reset Password</h2><div class="modal-sub" id="pwm-sub"></div>
+    <div id="pwm-msg"></div><input type="hidden" id="pwm-uid">
+    <div class="form-field" style="margin-top:14px"><label class="label">New Password</label><input class="input" id="pwm-pw" value="faculty123"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('pw-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doResetPassword()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════
+let USER=null, META={teachers:{},rooms:{},subjects:{},divisions:{},period_ids:[],period_labels:{},days:[],break_after_periods:[],timetable_orientation:'days_horizontal'};
+let TT={}, SC={}, SCI=0, CONSTRAINT_META={constraint_types:[],scope_types:[]}, EDITING_CONSTRAINT_ID=null, CURRENT_CONSTRAINTS=[];
+let ACTIVE_GENERATION_JOB_ID=null, GENERATION_MONITORING=false;
+let TT_DRAG=null;
+const GENERATION_STAGE_ORDER=[
+  ['starting','Starting'],
+  ['validating_inputs','Validating Inputs'],
+  ['planning_requests','Preparing Requests'],
+  ['scheduling_lectures','Scheduling Lectures'],
+  ['scheduling_labs','Scheduling Labs'],
+  ['scheduling_parallel','Scheduling Parallel Groups'],
+  ['validating_timetable','Final Validation'],
+  ['coverage_validation','Coverage Check'],
+  ['saving_timetable','Saving Timetable'],
+  ['completed','Completed']
+];
+function sc(sid){if(!SC[sid]){SC[sid]=`sc-${SCI%8}`;SCI++;}return SC[sid];}
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+
+// ════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════
+async function init(){
+  if(!getAuthToken()){showView('landing');return;}
+  try{
+    const r=await api('/api/auth/me');
+    if(r._ok){USER=r;await boot();}
+    else{clearAuthToken();showView('landing');}
+  }catch(e){clearAuthToken();showView('landing');}
+}
+
+async function boot(){
+  await loadMeta();
+  if(USER.role==='coordinator'){
+    document.getElementById('c-name').textContent=USER.name;
+    showView('coordinator');loadDashboard();populateSelects();await loadConstraintMeta();resumeActiveGenerationJob();
+  }else{
+    document.getElementById('f-name').textContent=USER.name;
+    showView('faculty');loadFacultySchedule();loadNotifications();
+    populateDays(['fa-day']);populatePeriods(['fa-period']);
+    setInterval(pollNotifications,15000);
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  API
+// ════════════════════════════════════════════════════
+const AUTH_TOKEN_KEY='tt_auth_token';
+function getAuthToken(){try{return sessionStorage.getItem(AUTH_TOKEN_KEY)||'';}catch(e){return'';}}
+function setAuthToken(token){try{if(token)sessionStorage.setItem(AUTH_TOKEN_KEY,token);}catch(e){}}
+function clearAuthToken(){try{sessionStorage.removeItem(AUTH_TOKEN_KEY);}catch(e){}}
+async function api(url,opts={}){
+  try{
+    const token=getAuthToken();
+    const r=await fetch(url,{headers:{'Content-Type':'application/json',...(token?{'Authorization':`Bearer ${token}`}:{}),...opts.headers},...opts,
+      body:opts.body?(typeof opts.body==='string'?opts.body:JSON.stringify(opts.body)):undefined});
+    const d=await r.json();d._ok=r.ok;d._status=r.status;return d;
+  }catch(e){return{_ok:false,error:e.message};}
+}
+
+async function exportExcel(){
+  try{
+    const token=getAuthToken();
+    const r=await fetch('/api/export/excel',{headers:token?{'Authorization':`Bearer ${token}`}:{}}); 
+    if(!r.ok){
+      let err='Could not export Excel';
+      try{const d=await r.json();err=d.error||err;}catch(e){}
+      alert(err);return;
+    }
+    const blob=await r.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const disposition=r.headers.get('Content-Disposition')||'';
+    const match=/filename=\"?([^\";]+)\"?/i.exec(disposition);
+    a.href=url;
+    a.download=match?.[1]||'timetable.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){alert(e.message||'Could not export Excel');}
+}
+
+// ════════════════════════════════════════════════════
+//  AUTH + LANDING
+// ════════════════════════════════════════════════════
+function openAuth(tab){document.getElementById('auth-modal').classList.remove('hidden');switchAuthTab(tab);}
+function closeAuth(){document.getElementById('auth-modal').classList.add('hidden');}
+function switchAuthTab(tab){
+  document.getElementById('auth-login').classList.toggle('hidden',tab!=='login');
+  document.getElementById('auth-signup').classList.toggle('hidden',tab!=='signup');
+  document.getElementById('atab-login').classList.toggle('active',tab==='login');
+  document.getElementById('atab-signup').classList.toggle('active',tab==='signup');
+}
+
+async function doLogin(){
+  const em=document.getElementById('l-email').value.trim();
+  const pw=document.getElementById('l-pw').value;
+  if(!em||!pw)return msg('login-msg','Email and password required','err');
+  const r=await api('/api/auth/login',{method:'POST',body:{email:em,password:pw}});
+  if(r._ok){setAuthToken(r.auth_token);USER=r;closeAuth();await boot();}
+  else msg('login-msg',r.error||'Login failed','err');
+}
+
+async function doSignup(){
+  const name=document.getElementById('s-name').value.trim();
+  const em  =document.getElementById('s-email').value.trim();
+  const pw  =document.getElementById('s-pw').value;
+  const role=document.getElementById('s-role').value;
+  if(!name||!em||!pw)return msg('signup-msg','All fields required','err');
+  if(pw.length<6)return msg('signup-msg','Password must be at least 6 characters','err');
+  const r=await api('/api/auth/register',{method:'POST',body:{name,email:em,password:pw,role}});
+  if(r._ok){msg('signup-msg',r.message+' Signing you in…','success');
+    // Auto-login
+    const lr=await api('/api/auth/login',{method:'POST',body:{email:em,password:pw}});
+    if(lr._ok){setAuthToken(lr.auth_token);USER=lr;setTimeout(()=>{closeAuth();boot();},1200);}
+  }else msg('signup-msg',r.error||'Sign-up failed','err');
+}
+
+async function doLogout(){
+  await api('/api/auth/logout',{method:'POST'});
+  clearAuthToken();
+  USER=null;META={teachers:{},rooms:{},subjects:{},divisions:{},period_ids:[],days:[]};
+  TT={};SC={};SCI=0;CONSTRAINT_META={constraint_types:[],scope_types:[]};EDITING_CONSTRAINT_ID=null;showView('landing');
+}
+
+// ════════════════════════════════════════════════════
+//  VIEWS / NAV
+// ════════════════════════════════════════════════════
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name)?.classList.add('active');
+}
+function cPage(el){
+  const name=el.dataset.page;
+  document.querySelectorAll('#view-coordinator .page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#view-coordinator .nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.querySelector(`#view-coordinator [data-page="${name}"]`)?.classList.add('active');
+  if(name==='teachers')   loadTeachers();
+  if(name==='rooms')      loadRooms();
+  if(name==='subjects')   loadSubjects();
+  if(name==='divisions')  loadDivisions();
+  if(name==='batches')    {loadBatchTeachers();initBatchForm();}
+  if(name==='divisions')   {updateBatchNameFields();}
+  if(name==='timetable')  loadAndRenderTimetable();
+  if(name==='changes')    initChanges();
+  if(name==='constraints'){loadConstraints();loadConstraintMeta();populatePeriods(['con-periods']);}
+  if(name==='changelog')  loadChangelog();
+  if(name==='users')      loadUsers();
+  if(name==='settings')   loadSettings();
+}
+function fPage(el){
+  const name=el.dataset.page;
+  document.querySelectorAll('#view-faculty .page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#view-faculty .nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.querySelector(`#view-faculty [data-page="${name}"]`)?.classList.add('active');
+  if(name==='f-notifications')loadNotifications();
+  if(name==='f-schedule')loadFacultySchedule();
+}
+function changeTab(el,target){
+  document.querySelectorAll('#page-changes .card').forEach(c=>c.classList.add('hidden'));
+  document.querySelectorAll('#page-changes .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(target)?.classList.remove('hidden');
+  el.classList.add('active');
+  if(target==='ct-absent')loadAdminAbsentNotifications();
+}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+
+// ════════════════════════════════════════════════════
+//  META
+// ════════════════════════════════════════════════════
+async function loadMeta(){
+  const r=await api('/api/timetable/meta');
+  if(r._ok){
+    META=r;
+    const orientation=document.getElementById('tt-orientation');
+    if(orientation)orientation.value=(localStorage.getItem('tt_orientation')||META.timetable_orientation||'days_horizontal');
+  }
+}
+async function loadConstraintMeta(){
+  const r=await api('/api/constraints/meta');
+  if(!r._ok)return;
+  CONSTRAINT_META=r;
+  const typeEl=document.getElementById('con-type');
+  if(typeEl&&(!typeEl.options.length||typeEl.dataset.bound!=='1')){
+    typeEl.innerHTML=(r.constraint_types||[]).map(t=>`<option value="${t.type}">${t.label}</option>`).join('');
+    typeEl.dataset.bound='1';
+  }
+  updateConForm();
+}
+function populateSelects(){
+  const teachers=Object.values(META.teachers);
+  const rooms=Object.values(META.rooms);
+  const subjects=Object.values(META.subjects);
+  const divs=Object.values(META.divisions);
+  const teacherOpts=teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  ['sj-teacher','sj-labteacher','rt-teacher','con-teacher'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=`<option value="">— select —</option>${teacherOpts}`;
+  });
+  const abEl=document.getElementById('ab-teacher');
+  if(abEl)abEl.innerHTML=teacherOpts||'<option>No teachers</option>';
+  // Subject checkboxes for divisions
+  buildSubjectChecks();
+  // Constraint selects
+  const subjOpts=subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  const csEl=document.getElementById('con-subj');
+  if(csEl)csEl.innerHTML=`<option value="">All subjects</option>${subjOpts}`;
+  const cslEl=document.getElementById('con-subject-list');
+  if(cslEl)cslEl.innerHTML=subjOpts;
+  const cdEl=document.getElementById('con-div');
+  if(cdEl)cdEl.innerHTML=`<option value="">All divisions</option>`+divs.map(d=>`<option value="${d.id}">Div ${d.id}</option>`).join('');
+  const crEl=document.getElementById('con-room');
+  if(crEl)crEl.innerHTML=`<option value="">All rooms</option>`+rooms.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+  // Division selects for changes
+  const divOpts=divs.map(d=>`<option value="${d.id}">Div ${d.id} — ${d.name}</option>`).join('');
+  ['tt-div','mv-div','sw-div','rt-div'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=divOpts||'<option>No divisions</option>';
+  });
+  const ttOrientation=document.getElementById('tt-orientation');
+  if(ttOrientation)ttOrientation.value=(localStorage.getItem('tt_orientation')||META.timetable_orientation||'days_horizontal');
+  populateDays(['ab-day','mv-day','fa-day']);
+  populatePeriods(['ab-period','mv-period','fa-period']);
+}
+function buildSubjectChecks(){
+  const subjects=Object.values(META.subjects);
+  const el=document.getElementById('d-subjects-grid');
+  if(!el)return;
+  el.innerHTML=subjects.length?subjects.map(s=>
+    `<label class="subject-check">
+      <input type="checkbox" value="${s.id}" name="d-subj">
+      <span>${s.name} <span style="color:var(--faint);font-size:10px">(${s.short_name})</span></span>
+    </label>`).join('')
+    :'<span style="color:var(--muted);font-size:12px">No subjects added yet</span>';
+}
+function getCheckedSubjects(){
+  return Array.from(document.querySelectorAll('[name="d-subj"]:checked')).map(c=>c.value);
+}
+function populateDays(ids){
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;
+    const blank=el.querySelector('option[value=""]');
+    el.innerHTML=(blank?'<option value="">Full Day</option>':'')+days.map(d=>`<option>${d}</option>`).join('');});
+}
+function populatePeriods(ids){
+  const pids=META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+  const lbl=META.period_labels||{};
+  ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;
+    const blank=el.querySelector('option[value=""]');
+    el.innerHTML=(blank?'<option value="">Full Day</option>':'')+
+      pids.map(p=>`<option value="${p}">${p}${lbl[p]?' ('+lbl[p]+')':''}</option>`).join('');});
+}
+
+// ════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════
+async function loadDashboard(){
+  const [t,r,s,d,log,cfg,notifs]=await Promise.all([api('/api/teachers'),api('/api/rooms'),api('/api/subjects'),api('/api/divisions'),api('/api/change-log?limit=5'),api('/api/config'),api('/api/notifications?unread=true')]);
+  document.getElementById('s-t').textContent=t._ok?t.length:'—';
+  document.getElementById('s-r').textContent=r._ok?r.length:'—';
+  document.getElementById('s-s').textContent=s._ok?s.length:'—';
+  document.getElementById('s-d').textContent=d._ok?d.length:'—';
+  if(cfg._ok&&cfg.department_name)document.getElementById('dash-dept').textContent=`${cfg.department_name} · ${cfg.academic_year||''} ${cfg.semester||''}`;
+  const logEl=document.getElementById('dash-log');
+  if(!log._ok||!log.length)logEl.textContent='No changes yet';
+  else logEl.innerHTML=log.map(l=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+    <span style="color:${l.success?'var(--green)':'var(--coral)'}">${l.success?'✓':'✗'}</span>
+    <span style="font-size:12px;flex:1">${l.description}</span>
+    <span style="font-size:10px;color:var(--faint);font-family:var(--mono)">${(l.created_at||'').slice(11,19)}</span>
+  </div>`).join('');
+  const notifEl=document.getElementById('dash-notifs');
+  if(!notifEl)return;
+  if(!notifs._ok||!notifs.length){notifEl.textContent='No active cover alerts';return;}
+  notifEl.innerHTML=notifs.slice(0,5).map(n=>{
+    const d=typeof n.data==='string'?JSON.parse(n.data||'{}'):(n.data||{});
+    const periodLabel=(d.period_ids&&d.period_ids.length>1)?`${d.period_ids[0]}-${d.period_ids[d.period_ids.length-1]}`:(d.period_id||'');
+    const free=(d.candidate_teachers||[]).map(t=>t.teacher_name).join(', ');
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="font-weight:700;color:var(--text)">${n.title}</div>
+      <div style="font-size:12px;color:var(--muted)">Div ${d.division_id||''} · ${d.day||''} ${periodLabel}</div>
+      <div style="font-size:12px;color:var(--muted)">${free?`Free faculty: ${free}`:'No free faculty suggestions yet'}</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadAdminAbsentNotifications(){
+  const el=document.getElementById('ab-open-list');
+  if(!el)return;
+  const r=await api('/api/notifications?unread=true');
+  if(!r._ok){el.innerHTML='<div class="empty-state">Could not load cover requests</div>';return;}
+  const open=r.filter(n=>n.type==='slot_free');
+  if(!open.length){el.innerHTML='<div class="empty-state">No open cover requests</div>';return;}
+  el.innerHTML=open.map(n=>{
+    const d=typeof n.data==='string'?JSON.parse(n.data||'{}'):(n.data||{});
+    const nid=n.int_id||n.id;
+    const periodLabel=(d.period_ids&&d.period_ids.length>1)?`${d.period_ids[0]}-${d.period_ids[d.period_ids.length-1]}`:(d.period_id||'');
+    const options=(d.candidate_teachers||[]).map(t=>`<option value="${t.teacher_id}">${t.teacher_name}</option>`).join('');
+    const roomLabel=(d.room_ids||[]).join(', ')||d.room_id||'TBA';
+    const batchLabel=(d.batch_assignments||[]).map(item=>item.batch_id).join(', ');
+    return `<div class="card" style="padding:12px">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+        <div>
+          <div style="font-weight:700">${d.subject_name||d.subject_id||n.title}</div>
+          <div style="font-size:12px;color:var(--muted)">Div ${d.division_id||''} · ${d.day||''} ${periodLabel}</div>
+          <div style="font-size:12px;color:var(--muted)">Absent: ${d.absent_teacher||d.absent_teacher_id||'Faculty'} · Room: ${roomLabel}</div>
+          ${batchLabel?`<div style="font-size:12px;color:var(--muted)">Batches: ${batchLabel}</div>`:''}
+        </div>
+        <span class="tag tag-err">OPEN</span>
+      </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+          <select class="input" id="ab-assign-${nid}" style="min-width:220px">
+            ${options||'<option value="">No free faculty available</option>'}
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="assignAbsentNotification(${nid})" ${options?'':'disabled'}>Assign Faculty</button>
+        <button class="btn btn-ghost btn-sm" onclick="dismissAdminAbsentNotification(${nid})">Dismiss</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function assignAbsentNotification(nid){
+  const teacherId=document.getElementById(`ab-assign-${nid}`)?.value;
+  if(!teacherId)return alert('Select a free faculty first');
+  const r=await api(`/api/notifications/${nid}/assign`,{method:'POST',body:{teacher_id:teacherId}});
+  msg('absent-msg',r.message,r._ok?'success':'err');
+  if(r._ok){
+    await loadAndRenderTimetable();
+    loadAdminAbsentNotifications();
+    loadDashboard();
+  }
+}
+
+async function dismissAdminAbsentNotification(nid){
+  await markRead(nid);
+  loadAdminAbsentNotifications();
+  loadDashboard();
+}
+
+// ════════════════════════════════════════════════════
+//  TEACHERS
+// ════════════════════════════════════════════════════
+async function loadTeachers(){
+  const r=await api('/api/teachers');
+  const tbody=document.getElementById('teacher-tbody');
+  if(!r._ok||!r.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">No teachers yet</td></tr>';return;}
+  tbody.innerHTML=r.map(t=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px">${t.id}</td><td>${t.name}</td>
+    <td style="font-family:var(--mono);font-size:11px">${t.short_name}</td>
+    <td style="font-size:11px;color:var(--muted)">${t.email||'—'}</td>
+    <td style="text-align:center">${t.max_hrs_per_day}</td><td style="text-align:center">${t.max_hrs_per_week}</td>
+    <td><button class="btn btn-danger btn-xs" onclick="delTeacher('${t.id}')">Del</button></td>
+  </tr>`).join('');
+}
+async function addTeacher(){
+  const name=document.getElementById('t-name').value.trim();
+  const short=document.getElementById('t-short').value.trim();
+  const email=document.getElementById('t-email').value.trim();
+  if(!name||!short||!email)return msg('teacher-msg','Name, short name and email required','err');
+  const r=await api('/api/teachers',{method:'POST',body:{name,short_name:short,email,id:document.getElementById('t-id').value.trim()||undefined,max_hrs_per_day:+document.getElementById('t-maxday').value,max_hrs_per_week:+document.getElementById('t-maxweek').value}});
+  if(r._ok){msg('teacher-msg',r.message,'success');['t-name','t-short','t-email','t-id'].forEach(id=>document.getElementById(id).value='');await loadMeta();populateSelects();loadTeachers();}
+  else msg('teacher-msg',r.error||'Error','err');
+}
+async function delTeacher(id){
+  if(!confirm(`Delete teacher ${id}?`))return;
+  const r=await api(`/api/teachers/${id}`,{method:'DELETE'});
+  if(r._ok){await loadMeta();populateSelects();loadTeachers();}else alert(r.error||'Cannot delete');
+}
+
+// ════════════════════════════════════════════════════
+//  ROOMS
+// ════════════════════════════════════════════════════
+async function loadRooms(){
+  const r=await api('/api/rooms');
+  const tbody=document.getElementById('room-tbody');
+  if(!r._ok||!r.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">No rooms yet</td></tr>';return;}
+  tbody.innerHTML=r.map(rm=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px">${rm.id}</td><td>${rm.name}</td>
+    <td><span class="tag ${rm.room_type==='lab'?'tag-lab':'tag-lec'}">${rm.room_type}</span></td>
+    <td style="text-align:center">${rm.capacity}</td>
+    <td><button class="btn btn-danger btn-xs" onclick="delRoom('${rm.id}')">Del</button></td>
+  </tr>`).join('');
+}
+async function addRoom(){
+  const name=document.getElementById('r-name').value.trim();
+  if(!name)return msg('room-msg','Room name required','err');
+  const r=await api('/api/rooms',{method:'POST',body:{name,id:document.getElementById('r-id').value.trim()||undefined,room_type:document.getElementById('r-type').value,capacity:+document.getElementById('r-cap').value}});
+  if(r._ok){msg('room-msg','Room added','success');['r-name','r-id'].forEach(id=>document.getElementById(id).value='');await loadMeta();populateSelects();loadRooms();}
+  else msg('room-msg',r.error||'Error','err');
+}
+async function delRoom(id){
+  if(!confirm('Delete room?'))return;
+  const r=await api(`/api/rooms/${id}`,{method:'DELETE'});
+  if(r._ok){await loadMeta();populateSelects();loadRooms();}else alert(r.error||'Cannot delete');
+}
+
+// ════════════════════════════════════════════════════
+//  SUBJECTS
+// ════════════════════════════════════════════════════
+let labOn=false;
+function toggleLab(){
+  labOn=!labOn;
+  document.getElementById('lab-toggle').classList.toggle('on',labOn);
+  const f=document.getElementById('lab-fields');
+  f.style.display=labOn?'flex':'none';
+}
+async function loadSubjects(){
+  const r=await api('/api/subjects');
+  const tbody=document.getElementById('subject-tbody');
+  if(!r._ok||!r.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">No subjects yet</td></tr>';return;}
+  tbody.innerHTML=r.map(s=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px">${s.id}</td><td>${s.name}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${s.teacher_id||'—'}</td>
+    <td style="text-align:center">${s.lectures_per_week}</td>
+    <td style="text-align:center">${s.has_lab?s.lab_hours_per_week+'h':'—'}</td>
+    <td style="text-align:center">${s.has_tutorial?s.tutorials_per_week:'—'}</td>
+    <td><button class="btn btn-danger btn-xs" onclick="delSubject('${s.id}')">Del</button></td>
+  </tr>`).join('');
+}
+async function addSubject(){
+  const name=document.getElementById('sj-name').value.trim();
+  const short=document.getElementById('sj-short').value.trim();
+  if(!name||!short)return msg('subject-msg','Name and short name required','err');
+  if(labOn){
+    const lhrs=+document.getElementById('sj-labhrs').value;
+    if(lhrs%2!==0)return msg('subject-msg','Lab hours per week must be even','err');
+    if(!document.getElementById('sj-labteacher').value)return msg('subject-msg','Default lab teacher required','err');
+  }
+  const r=await api('/api/subjects',{method:'POST',body:{
+    name,short_name:short,code:document.getElementById('sj-code').value,id:document.getElementById('sj-id').value||undefined,
+    teacher_id:document.getElementById('sj-teacher').value,
+    lectures_per_week:+document.getElementById('sj-lec').value,
+    tutorials_per_week:+document.getElementById('sj-tut').value,
+    has_tutorial:+document.getElementById('sj-tut').value>0,
+    has_lab:labOn,
+    lab_hours_per_week:labOn?+document.getElementById('sj-labhrs').value:0,
+    lab_teacher_id:labOn?document.getElementById('sj-labteacher').value:null,
+    lab_room_id:null, // dynamic — any lab room
+  }});
+  if(r._ok){msg('subject-msg','Subject added','success');['sj-name','sj-short','sj-code','sj-id'].forEach(id=>document.getElementById(id).value='');await loadMeta();populateSelects();loadSubjects();}
+  else msg('subject-msg',r.error||'Error','err');
+}
+async function delSubject(id){
+  if(!confirm('Delete subject?'))return;
+  const r=await api(`/api/subjects/${id}`,{method:'DELETE'});
+  if(r._ok){await loadMeta();populateSelects();loadSubjects();}else alert(r.error||'Cannot delete');
+}
+
+// ════════════════════════════════════════════════════
+//  DIVISIONS
+// ════════════════════════════════════════════════════
+async function loadDivisions(){
+  const r=await api('/api/divisions');
+  const el=document.getElementById('div-list');
+  if(!r._ok||!r.length){el.innerHTML='<div class="empty-state">No divisions yet</div>';return;}
+  el.innerHTML=r.map(d=>`<div class="card" style="padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div><strong>${d.name}</strong> <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">(${d.id})</span></div>
+      <button class="btn btn-danger btn-xs" onclick="delDivision('${d.id}')">Delete</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${d.size} students · ${d.batches.length} batch${d.batches.length!==1?'es':''}</div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+      ${(d.batches||[]).map(b=>`<span style="background:#EFF6FF;color:#3B82F6;font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid #BFDBFE" title="ID: ${b.id}">${b.name||b.id}</span>`).join('')}
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      ${(d.subjects||[]).map(s=>`<span class="tag tag-lec">${s}</span>`).join('')}
+    </div>
+  </div>`).join('');
+}
+function updateBatchNameFields(){
+  const n=Math.max(1,Math.min(10,+document.getElementById('d-batches').value||4));
+  const container=document.getElementById('d-batch-names');
+  if(!container)return;
+  const existing=[...container.querySelectorAll('input')].map(i=>i.value);
+  container.innerHTML='';
+  for(let i=0;i<n;i++){
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px';
+    row.innerHTML=`<span style="font-size:11px;color:var(--muted);min-width:54px">Batch ${i+1}</span><input class="input" style="flex:1;padding:5px 9px;font-size:12px" placeholder="e.g. Batch Alpha, Group B…" value="${existing[i]||''}">`;
+    container.appendChild(row);
+  }
+}
+async function addDivision(){
+  const subjects=getCheckedSubjects();
+  if(!subjects.length)return msg('div-msg','Select at least one subject','err');
+  const num_batches=+document.getElementById('d-batches').value;
+  const nameInputs=[...document.querySelectorAll('#d-batch-names input')].map(i=>i.value.trim());
+  const batch_names=nameInputs.length?nameInputs:[];
+  const r=await api('/api/divisions',{method:'POST',body:{
+    name:document.getElementById('d-name').value.trim(),id:document.getElementById('d-id').value.trim()||undefined,
+    room_id:null,
+    size:+document.getElementById('d-size').value,
+    num_batches,batch_names,subjects,
+  }});
+  if(r._ok){msg('div-msg','Division added','success');await loadMeta();populateSelects();loadDivisions();}
+  else msg('div-msg',r.error||'Error','err');
+}
+async function delDivision(id){
+  if(!confirm(`Delete Division ${id}? This removes all its timetable slots.`))return;
+  const r=await api(`/api/divisions/${id}`,{method:'DELETE'});
+  if(r._ok){await loadMeta();populateSelects();loadDivisions();}else alert(r.error||'Cannot delete: '+r.error);
+}
+
+// ════════════════════════════════════════════════════
+//  BATCH TEACHERS
+// ════════════════════════════════════════════════════
+async function loadBatchTeachers(){
+  const r=await api('/api/batch-teachers');
+  const tbody=document.getElementById('bt-tbody');
+  if(!r._ok||!r.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">No custom batch assignments yet</td></tr>';return;}
+  tbody.innerHTML=r.map(bt=>{
+    const t=META.teachers[bt.teacher_id]||{name:bt.teacher_id};
+    const s=META.subjects[bt.subject_id]||{name:bt.subject_id};
+    return`<tr>
+      <td>${bt.division_id}</td><td style="font-family:var(--mono)">${bt.batch_name||bt.batch_id}</td>
+      <td>${s.name}</td><td>${t.name}</td>
+      <td><button class="btn btn-danger btn-xs" onclick="delBatchTeacher(${bt.id})">Del</button></td>
+    </tr>`;}).join('');
+}
+function initBatchForm(){
+  const divs=Object.values(META.divisions);
+  const btDivEl=document.getElementById('bt-div');
+  if(btDivEl){btDivEl.innerHTML=divs.map(d=>`<option value="${d.id}">Div ${d.id} — ${d.name}</option>`).join('');updateBatchList();}
+  const teachers=Object.values(META.teachers);
+  const btTeEl=document.getElementById('bt-teacher');
+  if(btTeEl)btTeEl.innerHTML=teachers.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+  // Lab subjects only
+  const labSubjects=Object.values(META.subjects).filter(s=>s.has_lab);
+  const btSubEl=document.getElementById('bt-subject');
+  if(btSubEl)btSubEl.innerHTML=labSubjects.length?labSubjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join(''):'<option value="">No lab subjects</option>';
+}
+function updateBatchList(){
+  const divId=document.getElementById('bt-div')?.value;
+  if(!divId)return;
+  const div=META.divisions[divId];
+  const batches=(div?.batches||[]);
+  const btBEl=document.getElementById('bt-batch');
+  if(btBEl)btBEl.innerHTML=batches.length?batches.map(b=>`<option value="${b.id}">${b.name||b.id} (${b.id})</option>`).join(''):'<option>No batches</option>';
+}
+async function addBatchTeacher(){
+  const batch_id=document.getElementById('bt-batch').value;
+  const subject_id=document.getElementById('bt-subject').value;
+  const teacher_id=document.getElementById('bt-teacher').value;
+  if(!batch_id||!subject_id||!teacher_id)return msg('bt-msg','All fields required','err');
+  const r=await api('/api/batch-teachers',{method:'POST',body:{batch_id,subject_id,teacher_id}});
+  if(r._ok){msg('bt-msg','Assignment saved','success');loadBatchTeachers();}
+  else msg('bt-msg',r.error||'Error','err');
+}
+async function delBatchTeacher(id){
+  await api(`/api/batch-teachers/${id}`,{method:'DELETE'});loadBatchTeachers();
+}
+
+// ════════════════════════════════════════════════════
+//  GENERATE
+// ════════════════════════════════════════════════════
+async function doGenerate(){
+  const btn=document.getElementById('gen-btn');
+  btn.innerHTML='<div class="spinner"></div> Generating…';btn.disabled=true;
+  msg('gen-msg','Running deterministic timetable generation…','info');
+  document.getElementById('gen-error-panel').innerHTML='';
+  const r=await api('/api/generate',{method:'POST'});
+  const elapsed=typeof r.elapsed_seconds==='number'?` (${r.elapsed_seconds.toFixed(3)}s)`:''; 
+  btn.innerHTML='âš¡ Generate Now';btn.disabled=false;
+  if(r._ok){
+    msg('gen-msg',`${r.message}${elapsed}`,'success');
+    document.getElementById('gen-error-panel').innerHTML='';
+    await loadAndRenderTimetable();
+  }else{
+    const e=r.error||'Generation failed';
+    msg('gen-msg',`${e}${elapsed}`,'err');
+    renderGenerationDiagnostics(r);
+    alert(e);
+  }
+}
+async function doClear(){
+  if(!confirm('Clear current timetable?'))return;
+  const r=await api('/api/timetable/clear',{method:'POST'});
+  if(r._ok){TT={};renderTimetable();msg('gen-msg','Cleared. Click Generate to create a new one.','info');document.getElementById('gen-error-panel').innerHTML='';}
+}
+
+// ════════════════════════════════════════════════════
+//  TIMETABLE
+// ════════════════════════════════════════════════════
+function setGenerateButtonBusy(isBusy,label='Generating...'){
+  const btn=document.getElementById('gen-btn');
+  if(!btn)return;
+  btn.disabled=!!isBusy;
+  btn.innerHTML=isBusy?`<div class="spinner"></div> ${label}`:'Generate Now';
+}
+function generationStageLabel(stage){
+  const item=GENERATION_STAGE_ORDER.find(entry=>entry[0]===stage);
+  if(item)return item[1];
+  if(!stage)return'Queued';
+  return stage.replace(/_/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase());
+}
+function renderGenerationProgress(job){
+  const panel=document.getElementById('gen-progress-panel');
+  if(!panel)return;
+  if(!job){
+    panel.classList.add('hidden');
+    panel.innerHTML='';
+    return;
+  }
+  panel.classList.remove('hidden');
+  const percent=Math.max(0,Math.min(100,Number(job.percent||0)));
+  const stageCode=job.status==='completed'?'completed':(job.stage||'queued');
+  const activeIndex=Math.max(0,GENERATION_STAGE_ORDER.findIndex(entry=>entry[0]===stageCode));
+  const details=job.details||{};
+  const meta=[];
+  if(typeof details.placed==='number'&&typeof details.total==='number'&&details.total){
+    meta.push(`${details.placed}/${details.total} placed`);
+  }
+  if(typeof details.lecture_requests==='number'||typeof details.lab_requests==='number'||typeof details.parallel_requests==='number'){
+    meta.push(`Lec ${details.lecture_requests||0} · Lab ${details.lab_requests||0} · Par ${details.parallel_requests||0}`);
+  }
+  const stages=GENERATION_STAGE_ORDER.map((entry,index)=>{
+    const label=entry[1];
+    let cls='pending';
+    if(job.status==='completed'||index<activeIndex)cls='done';
+    else if(index===activeIndex)cls='active';
+    return `<div class="gen-stage ${cls}">
+      <div class="gen-stage-label">${label}</div>
+      <div class="gen-stage-desc">${index===activeIndex?(job.message||label):(cls==='done'?'Completed':'Waiting')}</div>
+    </div>`;
+  }).join('');
+  panel.innerHTML=`<div class="gen-progress">
+    <div class="gen-progress-head">
+      <div>
+        <div class="gen-progress-title">${generationStageLabel(stageCode)}</div>
+        <div class="gen-progress-sub">${job.message||'Preparing generation job'}${meta.length?` · ${meta.join(' · ')}`:''}</div>
+      </div>
+      <div class="gen-progress-meta">${percent.toFixed(0)}%${typeof job.elapsed_seconds==='number'?` · ${job.elapsed_seconds.toFixed(3)}s`:''}</div>
+    </div>
+    <div class="gen-progress-track"><div class="gen-progress-fill" style="width:${percent}%"></div></div>
+    <div class="gen-stage-list">${stages}</div>
+  </div>`;
+}
+async function monitorGenerationJob(jobId){
+  if(!jobId)return;
+  if(GENERATION_MONITORING&&ACTIVE_GENERATION_JOB_ID===jobId)return;
+  GENERATION_MONITORING=true;
+  ACTIVE_GENERATION_JOB_ID=jobId;
+  try{
+    while(true){
+      const job=await api(`/api/generate/jobs/${jobId}`);
+      if(!job._ok){
+        msg('gen-msg',job.error||'Could not load generation progress','err');
+        renderGenerationProgress(null);
+        break;
+      }
+      renderGenerationProgress(job);
+      setGenerateButtonBusy(job.status!=='completed'&&job.status!=='failed',generationStageLabel(job.stage||'queued'));
+      if(job.status==='completed'){
+        document.getElementById('gen-error-panel').innerHTML='';
+        msg('gen-msg',`${job.message||'Generation completed'} (${(job.elapsed_seconds||0).toFixed(3)}s)`,'success');
+        await loadDashboard();
+        await loadAndRenderTimetable();
+        renderGenerationProgress(job);
+        break;
+      }
+      if(job.status==='failed'){
+        msg('gen-msg',`${job.message||'Generation failed'} (${(job.elapsed_seconds||0).toFixed(3)}s)`,'err');
+        renderGenerationDiagnostics(job.result||{error:job.message,diagnostic:job.diagnostic,coverage_report:job.coverage_report});
+        break;
+      }
+      await sleep(1000);
+    }
+  }finally{
+    GENERATION_MONITORING=false;
+    ACTIVE_GENERATION_JOB_ID=null;
+    setGenerateButtonBusy(false);
+  }
+}
+async function resumeActiveGenerationJob(){
+  const r=await api('/api/generate/active');
+  if(r._ok&&r.job){
+    ACTIVE_GENERATION_JOB_ID=r.job.job_id;
+    renderGenerationProgress(r.job);
+    monitorGenerationJob(r.job.job_id);
+    return;
+  }
+  renderGenerationProgress(null);
+}
+async function doGenerate(){
+  if(GENERATION_MONITORING&&ACTIVE_GENERATION_JOB_ID){
+    msg('gen-msg','Generation is already running. Live stage updates are shown below.','info');
+    return;
+  }
+  setGenerateButtonBusy(true,'Starting...');
+  msg('gen-msg','Starting timetable generation job...','info');
+  document.getElementById('gen-error-panel').innerHTML='';
+  const r=await api('/api/generate/start',{method:'POST'});
+  if(!r._ok){
+    setGenerateButtonBusy(false);
+    msg('gen-msg',r.error||'Could not start generation','err');
+    renderGenerationDiagnostics(r);
+    return;
+  }
+  const job=r.job||r;
+  ACTIVE_GENERATION_JOB_ID=job?.job_id||null;
+  renderGenerationProgress(job);
+  await monitorGenerationJob(ACTIVE_GENERATION_JOB_ID);
+}
+async function doClear(){
+  if(!confirm('Clear current timetable?'))return;
+  const r=await api('/api/timetable/clear',{method:'POST'});
+  if(r._ok){
+    TT={};
+    renderTimetable();
+    msg('gen-msg','Cleared. Click Generate to create a new one.','info');
+    document.getElementById('gen-error-panel').innerHTML='';
+    renderGenerationProgress(null);
+  }
+}
+function renderGenerationDiagnostics(r){
+  const el=document.getElementById('gen-error-panel');if(!el)return;
+  const diag=r?.diagnostic;const gaps=r?.coverage_report?.gaps||[];const items=[];
+  if(diag)items.push(`<strong>${diag.code||'generation_error'}</strong>: ${diag.message||r.error||'Generation failed'}`);
+  gaps.slice(0,4).forEach(g=>items.push(g.message));
+  el.innerHTML=items.length?`<div class="alert alert-err" style="margin-top:12px"><div style="font-weight:600;margin-bottom:6px">Generation Details</div>${items.map(i=>`<div style="margin-top:4px">${i}</div>`).join('')}</div>`:'';
+}
+function getTimetableOrientation(){
+  return document.getElementById('tt-orientation')?.value||localStorage.getItem('tt_orientation')||META.timetable_orientation||'days_horizontal';
+}
+async function changeTimetableOrientation(){
+  const val=document.getElementById('tt-orientation')?.value||'days_horizontal';
+  localStorage.setItem('tt_orientation',val);
+  await api('/api/config',{method:'PUT',body:{timetable_orientation:val}});
+  renderTimetable();
+}
+function buildDisplayPeriods(){
+  const pids=META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+  const labels=META.period_labels||{};
+  const breaks=META.break_after_periods||[];
+  const out=[];let bi=0;
+  pids.forEach(pid=>{
+    out.push({id:pid,label:labels[pid]||pid,isBreak:false});
+    if(breaks.includes(pid))out.push({id:`BR${bi}`,label:(bi===0?'Break':bi===1?'Lunch':`Break ${bi+1}`),isBreak:true}),bi++;
+  });
+  return out;
+}
+function batchLabel(batchId){
+  for(const div of Object.values(META.divisions||{})){
+    const batch=(div.batches||[]).find(b=>b.id===batchId);
+    if(batch)return batch.name||batch.id;
+  }
+  return batchId||'';
+}
+function cellPayload(cells){
+  return JSON.stringify(cells).replace(/"/g,'&quot;');
+}
+function renderSlotCards(cells){
+  return cells.map(slot=>{
+    const subj=META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const typeTag=slot.slot_type==='lab'?'LAB':slot.slot_type==='tutorial'?'TUT':'LEC';
+    const badges=[
+      `<span class="tag ${slot.slot_type==='lab'?'tag-lab':slot.slot_type==='tutorial'?'tag-tut':'tag-lec'}">${typeTag}</span>`,
+      slot.parallel_group_id?`<span class="tag tag-amber">PAR</span>`:'',
+      slot.status==='open_cover'?`<span class="tag tag-err">OPEN</span>`:''
+    ].join('');
+    return `<div class="tt-cell ${slot.slot_type==='lab'?'sc-lab':slot.status==='open_cover'?'sc-2':sc(slot.subject_id)}" style="margin:4px;min-height:64px">
+      <div>
+        <div class="tt-top">${slot.slot_type==='lab'?'[LAB] ':''}${subj.short_name}</div>
+        <div class="tt-teacher">${tchr.short_name||tchr.name||'Cover Needed'}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}</div>
+      </div>
+      <div class="tt-bottom"><span class="tt-room">${room.name||'TBD'}</span><span>${badges}</span></div>
+    </div>`;
+  }).join('');
+}
+async function loadAndRenderTimetable(){
+  const [r,problems]=await Promise.all([api('/api/timetable'),api('/api/timetable/problems')]);
+  if(r._ok){
+    TT=r;
+    renderTimetable();
+    renderTimetableProblems(problems);
+  }
+}
+function renderTimetable(){
+  const divSel=document.getElementById('tt-div');
+  if(!divSel)return;
+  const selectedDiv=divSel.value;
+  const divs=selectedDiv?[selectedDiv]:Object.keys(TT);
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const displayPeriods=buildDisplayPeriods();
+  const orientation=getTimetableOrientation();
+  let html='';
+  for(const did of divs){
+    if(!TT[did])continue;
+    const div=META.divisions[did]||{name:did};
+    html+=`<div style="margin-bottom:32px"><div style="font-size:14px;font-weight:600;margin-bottom:10px">Division ${did} — ${div.name}</div><div class="tt-scroll"><table class="tt-table"><thead><tr>`;
+    if(orientation==='days_vertical'){
+      html+=`<th class="day-hdr">Day</th>`;
+      displayPeriods.forEach(p=>{html+=`<th>${p.label}</th>`;});
+      html+=`</tr></thead><tbody>`;
+      for(const day of days){
+        html+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+        for(const p of displayPeriods){
+          if(p.isBreak){html+=`<td class="brk"><div style="height:72px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--faint);font-style:italic">${p.label.toUpperCase()}</div></td>`;continue;}
+          const cells=TT[did]?.[day]?.[p.id]||[];
+          html+=cells.length?`<td data-slots="${cellPayload(cells)}" onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`:`<td><div class="tt-cell sc-empty"></div></td>`;
+        }
+        html+=`</tr>`;
+      }
+    }else{
+      html+=`<th class="day-hdr">Time</th>`;
+      for(const day of days){html+=`<th>${day.substring(0,3)}</th>`;}
+      html+=`</tr></thead><tbody>`;
+      for(const p of displayPeriods){
+        html+=`<tr><td class="tt-day">${p.label}</td>`;
+        for(const day of days){
+          if(p.isBreak){html+=`<td class="brk"><div style="height:72px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--faint);font-style:italic">${p.label.toUpperCase()}</div></td>`;continue;}
+          const cells=TT[did]?.[day]?.[p.id]||[];
+          html+=cells.length?`<td data-slots="${cellPayload(cells)}" onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`:`<td><div class="tt-cell sc-empty"></div></td>`;
+        }
+        html+=`</tr>`;
+      }
+    }
+    html+=`</tbody></table></div></div>`;
+  }
+  document.getElementById('tt-container').innerHTML=html||'<div class="empty-state">No timetable generated yet.</div>';
+}
+function openSlotModal(slots){
+  const list=Array.isArray(slots)?slots:[slots];
+  const first=list[0];if(!first)return;
+  document.getElementById('sm-title').textContent=(list.length>1?'Parallel / Grouped Sessions':'Session Details');
+  document.getElementById('sm-sub').textContent=`${first.day} ${first.period_id} · Division ${first.division_id}`;
+  let body=`<div style="display:flex;flex-direction:column;gap:12px">`;
+  list.forEach(slot=>{
+    const subj=META.subjects[slot.subject_id]||{name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    body+=`<div class="card" style="padding:14px">
+      ${IR('Subject',subj.name)}${IR('Type',slot.slot_type.toUpperCase())}${IR('Teacher',tchr.name||'Cover Needed')}${IR('Room',room.name)}
+      ${slot.batch_id?IR('Batch',batchLabel(slot.batch_id)):''}
+      ${slot.parallel_group_id?IR('Parallel',slot.parallel_group_id):''}
+      ${slot.status==='open_cover'?'<div class="alert alert-warn" style="margin-top:8px">Cover needed for this slot</div>':''}
+      ${slot.is_locked?'<div class="alert alert-warn" style="margin-top:8px">🔒 Locked — cannot be moved</div>':''}
+      ${USER?.role==='coordinator'?`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="lockSlot(${slot.id},${!slot.is_locked})">${slot.is_locked?'🔓 Unlock':'🔒 Lock'}</button></div>`:''}
+    </div>`;
+  });
+  body+=`</div>`;
+  document.getElementById('sm-body').innerHTML=body;
+  document.getElementById('slot-modal').classList.remove('hidden');
+}
+function IR(l,v){return`<div style="display:flex;gap:10px;font-size:13px"><span style="color:var(--muted);width:72px;flex-shrink:0">${l}</span><span>${v}</span></div>`;}
+function getPeriodIds(){
+  return META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+}
+function periodLabel(periodId){
+  const labels=META.period_labels||{};
+  return labels[periodId]||periodId;
+}
+function getTimetableCellSlots(divisionId,day,periodId){
+  return (TT[divisionId]?.[day]?.[periodId]||[]).map(slot=>({division_id:divisionId,day,period_id:periodId,...slot}));
+}
+function isLabOnlyCell(cells){
+  return Array.isArray(cells)&&cells.length>0&&cells.every(slot=>slot.slot_type==='lab');
+}
+function labGroupKey(cells){
+  if(!isLabOnlyCell(cells))return '';
+  return [...new Set(cells.map(slot=>slot.session_id||slot.id||slot.int_id).filter(Boolean))].sort().join('|');
+}
+function getLabBlockStartPeriodId(slots){
+  const list=Array.isArray(slots)?slots:[];
+  const first=list[0];
+  if(!first)return '';
+  const key=labGroupKey(list);
+  const periodIds=getPeriodIds();
+  let idx=periodIds.indexOf(first.period_id);
+  if(!key||idx<0)return first.period_id;
+  while(idx>0){
+    const prevPid=periodIds[idx-1];
+    if(labGroupKey(getTimetableCellSlots(first.division_id,first.day,prevPid))!==key)break;
+    idx-=1;
+  }
+  return periodIds[idx]||first.period_id;
+}
+function getLabBlockPeriodIds(slots){
+  const list=Array.isArray(slots)?slots:[];
+  const first=list[0];
+  if(!first)return [];
+  const key=labGroupKey(list);
+  const periodIds=getPeriodIds();
+  const startPid=getLabBlockStartPeriodId(list);
+  const startIdx=periodIds.indexOf(startPid);
+  if(!key||startIdx<0)return [first.period_id];
+  const out=[startPid];
+  if(startIdx<periodIds.length-1){
+    const nextPid=periodIds[startIdx+1];
+    if(labGroupKey(getTimetableCellSlots(first.division_id,first.day,nextPid))===key)out.push(nextPid);
+  }
+  return out;
+}
+function getLabBlockPeriodLabel(slots){
+  const ids=getLabBlockPeriodIds(slots);
+  const labels=ids.map(pid=>periodLabel(pid));
+  return labels.length>1?`${labels[0]} - ${labels[1]}`:(labels[0]||'');
+}
+function renderLabCard(cells,options={}){
+  const facultyView=!!options.facultyView;
+  const list=[...(cells||[])].sort((a,b)=>batchLabel(a.batch_id).localeCompare(batchLabel(b.batch_id)));
+  const first=list[0];
+  if(!first)return '<div class="tt-empty">Available</div>';
+  const subjectNames=[...new Set(list.map(slot=>(META.subjects[slot.subject_id]||{short_name:slot.subject_id}).short_name))].sort();
+  const periodText=getLabBlockPeriodLabel(list)||'2-hour lab block';
+  const locked=list.some(slot=>slot.is_locked);
+  const needsCover=list.some(slot=>slot.status==='open_cover');
+  const assignments=list.map(slot=>{
+    const subj=META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const left=facultyView
+      ? `Division ${slot.division_id}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`
+      : (batchLabel(slot.batch_id)||'Batch');
+    const right=facultyView
+      ? `${room.name||'TBD'}`
+      : `${tchr.short_name||tchr.name||'Cover Needed'} · ${room.name||'TBD'}`;
+    return `<div class="tt-lab-assignment"><span>${left}</span><span>${right}</span></div>`;
+  }).join('');
+  const badges=[
+    '<span class="tag tag-lab">LAB</span>',
+    needsCover?'<span class="tag tag-err">OPEN</span>':''
+  ].join('');
+  return `<div class="tt-slot-stack"><article class="tt-slot-card sc-lab">
+    <div class="tt-slot-head">
+      <div class="tt-slot-title-row">
+        <div class="tt-top">${subj.short_name} Lab</div>
+        ${locked?'<span class="tt-pin">Lock</span>':''}
+      </div>
+      <div class="tt-lab-summary">${periodText} · ${list.length} ${list.length===1?'batch':'batches'}</div>
+    </div>
+    <div class="tt-lab-assignments">${assignments}</div>
+    <div class="tt-meta">
+      <span class="tt-room">${facultyView?(META.divisions[first.division_id]?.name||first.division_id):'Grouped Lab Block'}</span>
+      <span class="tt-badges">${badges}</span>
+    </div>
+  </article></div>`;
+}
+function renderSlotCards(cells,options={}){
+  const facultyView=!!options.facultyView;
+  if(isLabOnlyCell(cells))return renderLabCard(cells,options);
+  return `<div class="tt-slot-stack">`+cells.map(slot=>{
+    const subj=META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const typeTag=slot.slot_type==='lab'?'LAB':slot.slot_type==='tutorial'?'TUT':'LEC';
+    const teacherLine=facultyView
+      ? `Division ${slot.division_id}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`
+      : `${tchr.short_name||tchr.name||'Cover Needed'}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`;
+    const badges=[
+      `<span class="tag ${slot.slot_type==='lab'?'tag-lab':slot.slot_type==='tutorial'?'tag-tut':'tag-lec'}">${typeTag}</span>`,
+      slot.parallel_group_id?`<span class="tag tag-amber">PAR</span>`:'',
+      slot.status==='open_cover'?`<span class="tag tag-err">OPEN</span>`:''
+    ].join('');
+    return `<article class="tt-slot-card ${slot.slot_type==='lab'?'sc-lab':slot.status==='open_cover'?'sc-2':sc(slot.subject_id)}">
+      <div class="tt-slot-head">
+        <div class="tt-slot-title-row">
+          <div class="tt-top">${subj.short_name}${slot.slot_type==='lab'?' Lab':''}</div>
+          ${slot.is_locked?'<span class="tt-pin">Lock</span>':''}
+        </div>
+        <div class="tt-teacher">${teacherLine}</div>
+      </div>
+      <div class="tt-meta">
+        <span class="tt-room">${room.name||'TBD'}</span>
+        <span class="tt-badges">${badges}</span>
+      </div>
+    </article>`;
+  }).join('')+`</div>`;
+}
+function openSlotModal(slots){
+  const list=Array.isArray(slots)?slots:[slots];
+  const first=list[0];
+  if(!first)return;
+  const isLabGroup=isLabOnlyCell(list);
+  document.getElementById('sm-title').textContent=isLabGroup?'Lab Block Details':(list.length>1?'Parallel / Grouped Sessions':'Session Details');
+  document.getElementById('sm-sub').textContent=`${first.day} ${isLabGroup?getLabBlockPeriodLabel(list):periodLabel(first.period_id)} · Division ${first.division_id}`;
+  let body=`<div style="display:flex;flex-direction:column;gap:12px">`;
+  if(isLabGroup){
+    const subj=META.subjects[first.subject_id]||{name:first.subject_id};
+    const assignments=[...list].sort((a,b)=>batchLabel(a.batch_id).localeCompare(batchLabel(b.batch_id))).map(slot=>{
+      const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+      const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+      return `<div class="tt-lab-assignment"><span>${batchLabel(slot.batch_id)||'Batch'}</span><span>${tchr.name||'Cover Needed'} · ${room.name||'TBD'}</span></div>`;
+    }).join('');
+    body+=`<div class="card" style="padding:14px">
+      ${IR('Subject',subj.name)}${IR('Type','LAB')}${IR('Duration',getLabBlockPeriodLabel(list))}${IR('Batches',String(list.length))}
+      <div style="margin-top:12px" class="tt-lab-assignments">${assignments}</div>
+      ${list.some(slot=>slot.status==='open_cover')?'<div class="alert alert-warn" style="margin-top:10px">Cover needed for one or more lab batches</div>':''}
+      ${list.some(slot=>slot.is_locked)?'<div class="alert alert-warn" style="margin-top:10px">This lab block contains locked slots</div>':''}
+    </div>`;
+    body+=`</div>`;
+    document.getElementById('sm-body').innerHTML=body;
+    document.getElementById('slot-modal').classList.remove('hidden');
+    return;
+  }
+  list.forEach(slot=>{
+    const subj=META.subjects[slot.subject_id]||{name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const slotId=slot.int_id||slot.id;
+    body+=`<div class="card" style="padding:14px">
+      ${IR('Subject',subj.name)}${IR('Type',slot.slot_type.toUpperCase())}${IR('Teacher',tchr.name||'Cover Needed')}${IR('Room',room.name)}
+      ${slot.batch_id?IR('Batch',batchLabel(slot.batch_id)):''}
+      ${slot.parallel_group_id?IR('Parallel',slot.parallel_group_id):''}
+      ${slot.status==='open_cover'?'<div class="alert alert-warn" style="margin-top:8px">Cover needed for this slot</div>':''}
+      ${slot.is_locked?'<div class="alert alert-warn" style="margin-top:8px">Locked - cannot be moved</div>':''}
+      ${USER?.role==='coordinator'&&slotId?`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="lockSlot(${slotId},${!slot.is_locked})">${slot.is_locked?'Unlock':'Lock'}</button></div>`:''}
+    </div>`;
+  });
+  body+=`</div>`;
+  document.getElementById('sm-body').innerHTML=body;
+  document.getElementById('slot-modal').classList.remove('hidden');
+}
+function getPeriodIds(){
+  return META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+}
+function periodLabel(periodId){
+  const labels=META.period_labels||{};
+  return labels[periodId]||periodId;
+}
+function getTimetableCellSlots(divisionId,day,periodId){
+  return (TT[divisionId]?.[day]?.[periodId]||[]).map(slot=>({division_id:divisionId,day,period_id:periodId,...slot}));
+}
+function isLabOnlyCell(cells){
+  return Array.isArray(cells)&&cells.length>0&&cells.every(slot=>slot.slot_type==='lab');
+}
+function labGroupKey(cells){
+  if(!isLabOnlyCell(cells))return '';
+  return [...new Set(cells.map(slot=>slot.session_id||slot.id||slot.int_id).filter(Boolean))].sort().join('|');
+}
+function getLabBlockStartPeriodId(slots){
+  const list=Array.isArray(slots)?slots:[];
+  const first=list[0];
+  if(!first)return '';
+  const key=labGroupKey(list);
+  const periodIds=getPeriodIds();
+  let idx=periodIds.indexOf(first.period_id);
+  if(!key||idx<0)return first.period_id;
+  while(idx>0){
+    const prevPid=periodIds[idx-1];
+    if(labGroupKey(getTimetableCellSlots(first.division_id,first.day,prevPid))!==key)break;
+    idx-=1;
+  }
+  return periodIds[idx]||first.period_id;
+}
+function getLabBlockPeriodIds(slots){
+  const list=Array.isArray(slots)?slots:[];
+  const first=list[0];
+  if(!first)return [];
+  const key=labGroupKey(list);
+  const periodIds=getPeriodIds();
+  const startPid=getLabBlockStartPeriodId(list);
+  const startIdx=periodIds.indexOf(startPid);
+  if(!key||startIdx<0)return [first.period_id];
+  const out=[startPid];
+  if(startIdx<periodIds.length-1){
+    const nextPid=periodIds[startIdx+1];
+    if(labGroupKey(getTimetableCellSlots(first.division_id,first.day,nextPid))===key)out.push(nextPid);
+  }
+  return out;
+}
+function getLabBlockPeriodLabel(slots){
+  const ids=getLabBlockPeriodIds(slots);
+  const labels=ids.map(pid=>periodLabel(pid));
+  return labels.length>1?`${labels[0]} - ${labels[1]}`:(labels[0]||'');
+}
+function getLabRenderInfo(divisionId,day,periodId){
+  const cells=getTimetableCellSlots(divisionId,day,periodId);
+  const key=labGroupKey(cells);
+  const periodIds=getPeriodIds();
+  const idx=periodIds.indexOf(periodId);
+  if(!key||idx<0)return {cells,skip:false,span:1};
+  if(idx>0){
+    const prevPid=periodIds[idx-1];
+    if(labGroupKey(getTimetableCellSlots(divisionId,day,prevPid))===key)return {cells,skip:true,span:0};
+  }
+  let span=1;
+  if(idx<periodIds.length-1){
+    const nextPid=periodIds[idx+1];
+    if(labGroupKey(getTimetableCellSlots(divisionId,day,nextPid))===key)span=2;
+  }
+  return {cells,skip:false,span};
+}
+function renderLabCard(cells,options={}){
+  const facultyView=!!options.facultyView;
+  const list=[...(cells||[])].sort((a,b)=>batchLabel(a.batch_id).localeCompare(batchLabel(b.batch_id)));
+  const first=list[0];
+  if(!first)return '<div class="tt-empty">Available</div>';
+  const subj=META.subjects[first.subject_id]||{short_name:first.subject_id,name:first.subject_id};
+  const periodText=getLabBlockPeriodLabel(list)||'2-hour lab block';
+  const locked=list.some(slot=>slot.is_locked);
+  const needsCover=list.some(slot=>slot.status==='open_cover');
+  const assignments=list.map(slot=>{
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const left=facultyView
+      ? `Division ${slot.division_id}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`
+      : (batchLabel(slot.batch_id)||'Batch');
+    const right=facultyView
+      ? `${room.name||'TBD'}`
+      : `${tchr.short_name||tchr.name||'Cover Needed'} · ${room.name||'TBD'}`;
+    return `<div class="tt-lab-assignment"><span>${left}</span><span>${right}</span></div>`;
+  }).join('');
+  const badges=[
+    '<span class="tag tag-lab">LAB</span>',
+    needsCover?'<span class="tag tag-err">OPEN</span>':''
+  ].join('');
+  return `<div class="tt-slot-stack"><article class="tt-slot-card sc-lab">
+    <div class="tt-slot-head">
+      <div class="tt-slot-title-row">
+        <div class="tt-top">${subj.short_name} Lab</div>
+        ${locked?'<span class="tt-pin">Lock</span>':''}
+      </div>
+      <div class="tt-lab-summary">${periodText} · ${list.length} ${list.length===1?'batch':'batches'}</div>
+    </div>
+    <div class="tt-lab-assignments">${assignments}</div>
+    <div class="tt-meta">
+      <span class="tt-room">${facultyView?(META.divisions[first.division_id]?.name||first.division_id):'Grouped Lab Block'}</span>
+      <span class="tt-badges">${badges}</span>
+    </div>
+  </article></div>`;
+}
+function renderSlotCards(cells,options={}){
+  const facultyView=!!options.facultyView;
+  if(isLabOnlyCell(cells))return renderLabCard(cells,options);
+  return `<div class="tt-slot-stack">`+cells.map(slot=>{
+    const subj=META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const typeTag=slot.slot_type==='lab'?'LAB':slot.slot_type==='tutorial'?'TUT':'LEC';
+    const teacherLine=facultyView
+      ? `Division ${slot.division_id}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`
+      : `${tchr.short_name||tchr.name||'Cover Needed'}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`;
+    const badges=[
+      `<span class="tag ${slot.slot_type==='lab'?'tag-lab':slot.slot_type==='tutorial'?'tag-tut':'tag-lec'}">${typeTag}</span>`,
+      slot.parallel_group_id?`<span class="tag tag-amber">PAR</span>`:'',
+      slot.status==='open_cover'?`<span class="tag tag-err">OPEN</span>`:''
+    ].join('');
+    return `<article class="tt-slot-card ${slot.slot_type==='lab'?'sc-lab':slot.status==='open_cover'?'sc-2':sc(slot.subject_id)}">
+      <div class="tt-slot-head">
+        <div class="tt-slot-title-row">
+          <div class="tt-top">${subj.short_name}${slot.slot_type==='lab'?' Lab':''}</div>
+          ${slot.is_locked?'<span class="tt-pin">Lock</span>':''}
+        </div>
+        <div class="tt-teacher">${teacherLine}</div>
+      </div>
+      <div class="tt-meta">
+        <span class="tt-room">${room.name||'TBD'}</span>
+        <span class="tt-badges">${badges}</span>
+      </div>
+    </article>`;
+  }).join('')+`</div>`;
+}
+function renderTimetable(){
+  const divSel=document.getElementById('tt-div');
+  if(!divSel)return;
+  const selectedDiv=divSel.value;
+  const divs=selectedDiv?[selectedDiv]:Object.keys(TT);
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const displayPeriods=buildDisplayPeriods();
+  const orientation=getTimetableOrientation();
+  const boards=[];
+  for(const did of divs){
+    if(!TT[did])continue;
+    const div=META.divisions[did]||{name:did};
+    const totalSessions=countDivisionSessions(did);
+    let table=`<div class="tt-scroll"><table class="tt-table"><thead><tr>`;
+    if(orientation==='days_vertical'){
+      table+=`<th class="day-hdr">Day</th>`;
+      displayPeriods.forEach(period=>{table+=`<th>${period.label}</th>`;});
+      table+=`</tr></thead><tbody>`;
+      for(const day of days){
+        table+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+        for(const period of displayPeriods){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const info=getLabRenderInfo(did,day,period.id);
+          if(info.skip)continue;
+          const cells=info.cells;
+          const dragAttrs=(USER?.role==='coordinator'&&cells.length)?` draggable="true" ondragstart="startTimetableDrag(event, this.dataset.slotIds, '${day}', '${period.id}')" ondragend="endTimetableDrag(event)"`:'';
+          const dropAttrs=USER?.role==='coordinator'?` ondragover="allowTimetableDrop(event)" ondragleave="clearTimetableDrop(event)" ondrop="handleTimetableDrop(event, '${did}', '${day}', '${period.id}')"`:'';
+          const spanAttr=info.span>1?` colspan="${info.span}"`:'';
+          table+=cells.length
+            ? `<td${spanAttr} class="tt-clickable tt-draggable" data-slot-ids="${cellSlotIds(cells)}" data-slots="${cellPayload(cells)}"${dragAttrs}${dropAttrs} onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td${dropAttrs}><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }else{
+      table+=`<th class="day-hdr">Time</th>`;
+      for(const day of days){table+=`<th>${day.substring(0,3)}</th>`;}
+      table+=`</tr></thead><tbody>`;
+      for(const period of displayPeriods){
+        table+=`<tr><td class="tt-day">${period.label}</td>`;
+        for(const day of days){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const info=getLabRenderInfo(did,day,period.id);
+          if(info.skip)continue;
+          const cells=info.cells;
+          const dragAttrs=(USER?.role==='coordinator'&&cells.length)?` draggable="true" ondragstart="startTimetableDrag(event, this.dataset.slotIds, '${day}', '${period.id}')" ondragend="endTimetableDrag(event)"`:'';
+          const dropAttrs=USER?.role==='coordinator'?` ondragover="allowTimetableDrop(event)" ondragleave="clearTimetableDrop(event)" ondrop="handleTimetableDrop(event, '${did}', '${day}', '${period.id}')"`:'';
+          const spanAttr=info.span>1?` rowspan="${info.span}"`:'';
+          table+=cells.length
+            ? `<td${spanAttr} class="tt-clickable tt-draggable" data-slot-ids="${cellSlotIds(cells)}" data-slots="${cellPayload(cells)}"${dragAttrs}${dropAttrs} onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td${dropAttrs}><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }
+    table+=`</tbody></table></div>`;
+    boards.push(`<section class="tt-board">
+      <div class="tt-board-head">
+        <div>
+          <div class="tt-board-kicker">Division ${did}</div>
+          <div class="tt-board-title">${div.name||did}</div>
+        </div>
+        <div class="tt-board-meta">${totalSessions} scheduled sessions · ${days.length} days</div>
+      </div>
+      ${table}
+    </section>`);
+  }
+  document.getElementById('tt-container').innerHTML=boards.length?`<div class="tt-shell">${boards.join('')}</div>`:'<div class="empty-state">No timetable generated yet.</div>';
+}
+function openSlotModal(slots){
+  const list=Array.isArray(slots)?slots:[slots];
+  const first=list[0];
+  if(!first)return;
+  const isLabGroup=isLabOnlyCell(list);
+  document.getElementById('sm-title').textContent=isLabGroup?'Lab Block Details':(list.length>1?'Parallel / Grouped Sessions':'Session Details');
+  document.getElementById('sm-sub').textContent=`${first.day} ${isLabGroup?getLabBlockPeriodLabel(list):periodLabel(first.period_id)} · Division ${first.division_id}`;
+  let body=`<div style="display:flex;flex-direction:column;gap:12px">`;
+  if(isLabGroup){
+    const subj=META.subjects[first.subject_id]||{name:first.subject_id};
+    const assignments=[...list].sort((a,b)=>batchLabel(a.batch_id).localeCompare(batchLabel(b.batch_id))).map(slot=>{
+      const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+      const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+      return `<div class="tt-lab-assignment"><span>${batchLabel(slot.batch_id)||'Batch'}</span><span>${tchr.name||'Cover Needed'} · ${room.name||'TBD'}</span></div>`;
+    }).join('');
+    body+=`<div class="card" style="padding:14px">
+      ${IR('Subject',subj.name)}${IR('Type','LAB')}${IR('Duration',getLabBlockPeriodLabel(list))}${IR('Batches',String(list.length))}
+      <div style="margin-top:12px" class="tt-lab-assignments">${assignments}</div>
+      ${list.some(slot=>slot.status==='open_cover')?'<div class="alert alert-warn" style="margin-top:10px">Cover needed for one or more lab batches</div>':''}
+      ${list.some(slot=>slot.is_locked)?'<div class="alert alert-warn" style="margin-top:10px">This lab block contains locked slots</div>':''}
+    </div>`;
+    body+=`</div>`;
+    document.getElementById('sm-body').innerHTML=body;
+    document.getElementById('slot-modal').classList.remove('hidden');
+    return;
+  }
+  list.forEach(slot=>{
+    const subj=META.subjects[slot.subject_id]||{name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const slotId=slot.int_id||slot.id;
+    body+=`<div class="card" style="padding:14px">
+      ${IR('Subject',subj.name)}${IR('Type',slot.slot_type.toUpperCase())}${IR('Teacher',tchr.name||'Cover Needed')}${IR('Room',room.name)}
+      ${slot.batch_id?IR('Batch',batchLabel(slot.batch_id)):''}
+      ${slot.parallel_group_id?IR('Parallel',slot.parallel_group_id):''}
+      ${slot.status==='open_cover'?'<div class="alert alert-warn" style="margin-top:8px">Cover needed for this slot</div>':''}
+      ${slot.is_locked?'<div class="alert alert-warn" style="margin-top:8px">Locked - cannot be moved</div>':''}
+      ${USER?.role==='coordinator'&&slotId?`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="lockSlot(${slotId},${!slot.is_locked})">${slot.is_locked?'Unlock':'Lock'}</button></div>`:''}
+    </div>`;
+  });
+  body+=`</div>`;
+  document.getElementById('sm-body').innerHTML=body;
+  document.getElementById('slot-modal').classList.remove('hidden');
+}
+async function lockSlot(id,locked){const r=await api(`/api/slots/${id}/lock`,{method:'POST',body:{locked}});closeModal('slot-modal');if(r._ok)loadAndRenderTimetable();}
+
+// ════════════════════════════════════════════════════
+//  CHANGES
+// ════════════════════════════════════════════════════
+function countDivisionSessions(divisionId){
+  const seen=new Set();
+  const division=TT[divisionId]||{};
+  Object.values(division).forEach(dayRows=>{
+    Object.values(dayRows||{}).forEach(slots=>{
+      (slots||[]).forEach(slot=>{
+        const key=`${slot.session_id||slot.int_id||slot.id}`;
+        if(!seen.has(key))seen.add(key);
+      });
+    });
+  });
+  return seen.size;
+}
+function renderSlotCards(cells,options={}){
+  const facultyView=!!options.facultyView;
+  return `<div class="tt-slot-stack">`+cells.map(slot=>{
+    const subj=META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const typeTag=slot.slot_type==='lab'?'LAB':slot.slot_type==='tutorial'?'TUT':'LEC';
+    const teacherLine=facultyView
+      ? `Division ${slot.division_id}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`
+      : `${tchr.short_name||tchr.name||'Cover Needed'}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`;
+    const badges=[
+      `<span class="tag ${slot.slot_type==='lab'?'tag-lab':slot.slot_type==='tutorial'?'tag-tut':'tag-lec'}">${typeTag}</span>`,
+      slot.parallel_group_id?`<span class="tag tag-amber">PAR</span>`:'',
+      slot.status==='open_cover'?`<span class="tag tag-err">OPEN</span>`:''
+    ].join('');
+    return `<article class="tt-slot-card ${slot.slot_type==='lab'?'sc-lab':slot.status==='open_cover'?'sc-2':sc(slot.subject_id)}">
+      <div class="tt-slot-head">
+        <div class="tt-slot-title-row">
+          <div class="tt-top">${subj.short_name}${slot.slot_type==='lab'?' Lab':''}</div>
+          ${slot.is_locked?'<span class="tt-pin">Lock</span>':''}
+        </div>
+        <div class="tt-teacher">${teacherLine}</div>
+      </div>
+      <div class="tt-meta">
+        <span class="tt-room">${room.name||'TBD'}</span>
+        <span class="tt-badges">${badges}</span>
+      </div>
+    </article>`;
+  }).join('')+`</div>`;
+}
+function renderTimetable(){
+  const divSel=document.getElementById('tt-div');
+  if(!divSel)return;
+  const selectedDiv=divSel.value;
+  const divs=selectedDiv?[selectedDiv]:Object.keys(TT);
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const displayPeriods=buildDisplayPeriods();
+  const orientation=getTimetableOrientation();
+  const boards=[];
+  for(const did of divs){
+    if(!TT[did])continue;
+    const div=META.divisions[did]||{name:did};
+    const totalSessions=countDivisionSessions(did);
+    let table=`<div class="tt-scroll"><table class="tt-table"><thead><tr>`;
+    if(orientation==='days_vertical'){
+      table+=`<th class="day-hdr">Day</th>`;
+      displayPeriods.forEach(period=>{table+=`<th>${period.label}</th>`;});
+      table+=`</tr></thead><tbody>`;
+      for(const day of days){
+        table+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+        for(const period of displayPeriods){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const cells=TT[did]?.[day]?.[period.id]||[];
+          table+=cells.length
+            ? `<td class="tt-clickable" data-slots="${cellPayload(cells)}" onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }else{
+      table+=`<th class="day-hdr">Time</th>`;
+      for(const day of days){table+=`<th>${day.substring(0,3)}</th>`;}
+      table+=`</tr></thead><tbody>`;
+      for(const period of displayPeriods){
+        table+=`<tr><td class="tt-day">${period.label}</td>`;
+        for(const day of days){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const cells=TT[did]?.[day]?.[period.id]||[];
+          table+=cells.length
+            ? `<td class="tt-clickable" data-slots="${cellPayload(cells)}" onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }
+    table+=`</tbody></table></div>`;
+    boards.push(`<section class="tt-board">
+      <div class="tt-board-head">
+        <div>
+          <div class="tt-board-kicker">Division ${did}</div>
+          <div class="tt-board-title">${div.name||did}</div>
+        </div>
+        <div class="tt-board-meta">${totalSessions} scheduled sessions · ${days.length} days</div>
+      </div>
+      ${table}
+    </section>`);
+  }
+  document.getElementById('tt-container').innerHTML=boards.length?`<div class="tt-shell">${boards.join('')}</div>`:'<div class="empty-state">No timetable generated yet.</div>';
+}
+function openSlotModal(slots){
+  const list=Array.isArray(slots)?slots:[slots];
+  const first=list[0];
+  if(!first)return;
+  document.getElementById('sm-title').textContent=list.length>1?'Parallel / Grouped Sessions':'Session Details';
+  document.getElementById('sm-sub').textContent=`${first.day} ${first.period_id} · Division ${first.division_id}`;
+  let body=`<div style="display:flex;flex-direction:column;gap:12px">`;
+  list.forEach(slot=>{
+    const subj=META.subjects[slot.subject_id]||{name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const slotId=slot.int_id||slot.id;
+    body+=`<div class="card" style="padding:14px">
+      ${IR('Subject',subj.name)}${IR('Type',slot.slot_type.toUpperCase())}${IR('Teacher',tchr.name||'Cover Needed')}${IR('Room',room.name)}
+      ${slot.batch_id?IR('Batch',batchLabel(slot.batch_id)):''}
+      ${slot.parallel_group_id?IR('Parallel',slot.parallel_group_id):''}
+      ${slot.status==='open_cover'?'<div class="alert alert-warn" style="margin-top:8px">Cover needed for this slot</div>':''}
+      ${slot.is_locked?'<div class="alert alert-warn" style="margin-top:8px">Locked - cannot be moved</div>':''}
+      ${USER?.role==='coordinator'&&slotId?`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="lockSlot(${slotId},${!slot.is_locked})">${slot.is_locked?'Unlock':'Lock'}</button></div>`:''}
+    </div>`;
+  });
+  body+=`</div>`;
+  document.getElementById('sm-body').innerHTML=body;
+  document.getElementById('slot-modal').classList.remove('hidden');
+}
+function IR(l,v){return`<div style="display:flex;gap:10px;font-size:13px"><span style="color:var(--muted);width:72px;flex-shrink:0">${l}</span><span>${v}</span></div>`;}
+async function loadFacultySchedule(){
+  const [sched,metaR]=await Promise.all([api('/api/my-schedule'),api('/api/timetable/meta')]);
+  if(metaR._ok)META=metaR;
+  const el=document.getElementById('f-sched-grid');
+  const sub=document.getElementById('f-sched-sub');
+  if(!sched._ok||!sched.length){if(el)el.innerHTML='<div class="empty-state">No classes scheduled yet.</div>';return;}
+  if(sub)sub.textContent=`${sched.length} class periods this week`;
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const pids=META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+  const plabels=META.period_labels||{};
+  const grid={};sched.forEach(s=>{grid[s.day]=grid[s.day]||{};(grid[s.day][s.period_id]=grid[s.day][s.period_id]||[]).push(s);});
+  let html=`<div class="tt-scroll"><table class="tt-table"><thead><tr><th class="day-hdr">Day</th>`;
+  pids.forEach(pid=>{html+=`<th>${plabels[pid]||pid}</th>`;});
+  html+=`</tr></thead><tbody>`;
+  days.forEach(day=>{
+    html+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+    pids.forEach(pid=>{
+      const slots=grid[day]?.[pid]||[];
+      html+=slots.length?`<td>${renderSlotCards(slots,{facultyView:true})}</td>`:`<td><div class="tt-empty">Free</div></td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  if(el)el.innerHTML=html;
+}
+function initChanges(){
+  populateSelects();
+  const d1=document.getElementById('mv-div')?.value;if(d1)loadSlots('mv');
+  const d2=document.getElementById('sw-div')?.value;if(d2)loadSlots('sw');
+  const d3=document.getElementById('rt-div')?.value;if(d3)loadSlots('rt');
+  loadAdminAbsentNotifications();
+}
+async function loadSlots(prefix){
+  const divId=document.getElementById(prefix+'-div')?.value;if(!divId)return;
+  if(prefix==='sw'){
+    const r=await api(`/api/timetable?division=${divId}`);if(!r._ok)return;
+    const grid=r[divId]||{};
+    const pids=META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+    const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+    const batchMap=Object.fromEntries(((META.divisions[divId]?.batches)||[]).map(b=>[b.id,b.name||b.id]));
+    const isLabLead=(day,pid,cells)=>{
+      if(!cells.length||!cells.every(cell=>cell.slot_type==='lab'))return true;
+      const idx=pids.indexOf(pid);
+      if(idx<=0)return true;
+      const prevCells=grid?.[day]?.[pids[idx-1]]||[];
+      const sessionIds=new Set(cells.map(cell=>cell.session_id));
+      return !prevCells.some(cell=>sessionIds.has(cell.session_id));
+    };
+    const periodLabel=(day,pid,cells)=>{
+      if(!cells.length||!cells.every(cell=>cell.slot_type==='lab'))return pid;
+      const idx=pids.indexOf(pid);
+      const nextPid=pids[idx+1];
+      if(!nextPid)return pid;
+      const nextCells=grid?.[day]?.[nextPid]||[];
+      const sessionIds=new Set(cells.map(cell=>cell.session_id));
+      return nextCells.some(cell=>sessionIds.has(cell.session_id))?`${pid}-${nextPid}`:pid;
+    };
+    const labelFor=(day,pid,cells)=>{
+      const plabel=periodLabel(day,pid,cells);
+      if(cells.every(cell=>cell.slot_type==='lab')){
+        const subjectNames=[...new Set(cells.map(cell=>(META.subjects[cell.subject_id]||{short_name:cell.subject_id}).short_name))].sort();
+        const assignments=cells.map(cell=>{
+          const subj=META.subjects[cell.subject_id]||{short_name:cell.subject_id};
+          const tchr=META.teachers[cell.teacher_id]||{short_name:cell.teacher_id||'OPEN'};
+          return `${batchMap[cell.batch_id]||cell.batch_id||'Batch'}:${subj.short_name}:${tchr.short_name||'OPEN'}`;
+        });
+        return `${day} ${plabel} - ${subjectNames.join(' / ')} LAB (${assignments.join(', ')})`;
+      }
+      const subjects=[...new Set(cells.map(cell=>(META.subjects[cell.subject_id]||{short_name:cell.subject_id}).short_name))];
+      const teachers=[...new Set(cells.map(cell=>(META.teachers[cell.teacher_id]||{short_name:cell.teacher_id||'OPEN'}).short_name||'OPEN'))];
+      return `${day} ${plabel} - ${subjects.join(' / ')} (${teachers.join(' / ')})`;
+    };
+    const opts=[];
+    days.forEach(day=>{
+      pids.forEach(pid=>{
+        const cells=grid?.[day]?.[pid]||[];
+        if(!cells.length||!isLabLead(day,pid,cells))return;
+        const firstId=cells[0].id||cells[0].int_id;
+        opts.push(`<option value="${firstId}">${labelFor(day,pid,cells)}</option>`);
+      });
+    });
+    ['sw-s1','sw-s2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts.join('')||'<option>No sessions</option>';});
+    return;
+  }
+  const r=await api(`/api/slots?division=${divId}`);if(!r._ok)return;
+  const opts=r.map(s=>{
+    const subj=META.subjects[s.subject_id]||{short_name:s.subject_id};
+    const tchr=META.teachers[s.teacher_id]||{short_name:s.teacher_id};
+    return`<option value="${s.int_id||s.id}">${s.day} ${s.period_id} — ${subj.short_name} (${tchr.short_name||'OPEN'})</option>`;
+  }).join('');
+  if(prefix==='sw'){['sw-s1','sw-s2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});}
+  else{const el=document.getElementById(prefix+'-slot');if(el)el.innerHTML=opts||'<option>No slots</option>';}
+}
+async function doMove(){
+  const slotId=document.getElementById('mv-slot').value;
+  const day=document.getElementById('mv-day').value;
+  const period=document.getElementById('mv-period').value;
+  if(!slotId||!day||!period)return msg('move-msg','Select slot, day and period','err');
+  const r=await api(`/api/slots/${slotId}/move`,{method:'POST',body:{day,period_id:period}});
+  msg('move-msg',r.message,r._ok?'success':'err');
+  if(r._ok){await loadAndRenderTimetable();loadSlots('mv');}
+}
+async function checkMoveFeasible(){
+  const slotId=document.getElementById('mv-slot').value;
+  const day=document.getElementById('mv-day').value;
+  const period=document.getElementById('mv-period').value;
+  if(!slotId||!day||!period)return msg('move-msg','Select slot, day and period','err');
+  const r=await api('/api/slots/validate-cell-move',{method:'POST',body:{slot_ids:[+slotId],day,period_id:period}});
+  msg('move-msg',r._ok?'Feasible: this move can be applied':(r.message||r.error||'Not feasible'),r._ok?'success':'err');
+}
+async function doSwap(){
+  const s1=document.getElementById('sw-s1').value;const s2=document.getElementById('sw-s2').value;
+  if(!s1||!s2||s1===s2)return msg('swap-msg','Select two different slots','err');
+  const r=await api('/api/slots/swap',{method:'POST',body:{slot_id_1:+s1,slot_id_2:+s2}});
+  msg('swap-msg',r.message,r._ok?'success':'err');if(r._ok){await loadAndRenderTimetable();loadSlots('sw');}
+}
+async function checkSwapFeasible(){
+  const s1=document.getElementById('sw-s1').value;const s2=document.getElementById('sw-s2').value;
+  if(!s1||!s2||s1===s2)return msg('swap-msg','Select two different slots','err');
+  const r=await api('/api/slots/validate-swap',{method:'POST',body:{slot_id_1:+s1,slot_id_2:+s2}});
+  msg('swap-msg',r._ok?'Feasible: this swap can be applied':(r.message||r.error||'Not feasible'),r._ok?'success':'err');
+}
+async function doAbsent(){
+  const tid=document.getElementById('ab-teacher').value;const day=document.getElementById('ab-day').value;
+  const period=document.getElementById('ab-period').value||undefined;
+  if(!tid||!day)return msg('absent-msg','Select teacher and day','err');
+  const r=await api('/api/teacher-absent',{method:'POST',body:{teacher_id:tid,day,period_id:period}});
+  const opened=r.opened_sessions?.length||0;
+  msg('absent-msg',r.message||(opened?`${opened} session(s) opened for cover`:'Done'),r.success?'success':'err');
+  if(r.success){await loadAndRenderTimetable();loadAdminAbsentNotifications();loadDashboard();}
+}
+async function doChangeTeacher(){
+  const slotId=document.getElementById('rt-slot').value;const tid=document.getElementById('rt-teacher').value;
+  if(!slotId||!tid)return msg('rt-msg','Select slot and teacher','err');
+  const r=await api(`/api/slots/${slotId}/teacher`,{method:'PUT',body:{teacher_id:tid}});
+  msg('rt-msg',r.message,r._ok?'success':'err');if(r._ok){await loadAndRenderTimetable();loadSlots('rt');}
+}
+
+// ════════════════════════════════════════════════════
+//  CONSTRAINTS
+// ════════════════════════════════════════════════════
+function updateConForm(){
+  const type=document.getElementById('con-type').value;
+  const scope=document.getElementById('con-scope').value;
+  const meta=(CONSTRAINT_META.constraint_types||[]).find(t=>t.type===type)||{};
+  const priority=document.getElementById('con-priority');
+  if(priority&&!document.getElementById('con-edit-id').value&&meta.default_priority)priority.value=meta.default_priority;
+  document.getElementById('con-period-wrap').classList.toggle('hidden',!['avoid_period','prefer_period'].includes(type));
+  document.getElementById('con-day-wrap').classList.toggle('hidden',!['avoid_day','prefer_day'].includes(type));
+  document.getElementById('con-val-wrap').classList.toggle('hidden',type!=='max_per_day');
+  document.getElementById('con-subject-list-wrap').classList.toggle('hidden',type!=='parallel_group');
+  document.getElementById('con-parallel-wrap').classList.toggle('hidden',type!=='parallel_group');
+  document.getElementById('con-batch-group-wrap').classList.toggle('hidden',scope!=='batch_group');
+  document.getElementById('con-val-label').textContent=type==='max_per_day'?'Max Per Day':'Value';
+}
+async function loadConstraints(){
+  const r=await api('/api/constraints');const el=document.getElementById('constraint-list');
+  if(!r._ok||!r.length){CURRENT_CONSTRAINTS=[];el.innerHTML='<div class="empty-state">No constraints defined</div>';return;}
+  CURRENT_CONSTRAINTS=r;
+  el.innerHTML=r.map(c=>{
+    const scope=c.scope||{};const params=c.params||{};
+    const scopeText=[
+      scope.division_ids?.length?`Div ${scope.division_ids.join(', ')}`:'',
+      scope.subject_ids?.length?`Subj ${scope.subject_ids.join(', ')}`:'',
+      scope.teacher_ids?.length?`Teacher ${scope.teacher_ids.join(', ')}`:'',
+      scope.room_ids?.length?`Room ${scope.room_ids.join(', ')}`:'',
+      scope.batch_group_ids?.length?`Group ${scope.batch_group_ids.join(', ')}`:''
+    ].filter(Boolean).join(' · ')||'Global';
+    const paramText=params.subject_ids?`Subjects: ${params.subject_ids.join(', ')}`:
+      params.days?.length?`Days: ${params.days.join(', ')}`:
+      params.period_ids?.length?`Periods: ${params.period_ids.join(', ')}`:
+      params.max_per_day?`Max/day: ${params.max_per_day}`:'No extra params';
+    return `<div class="constraint-chip" style="align-items:flex-start">
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="constraint-type">${c.constraint_type}</span>
+          <span class="tag ${c.priority==='hard'?'tag-err':'tag-tut'}">${(c.priority||'hard').toUpperCase()}</span>
+          ${c.active?'<span class="tag tag-ok">ACTIVE</span>':'<span class="tag tag-amber">INACTIVE</span>'}
+        </div>
+        <div style="font-size:12px">${c.description||'—'}</div>
+        <div style="font-size:11px;color:var(--muted)">${scopeText}</div>
+        <div style="font-size:11px;color:var(--faint)">${paramText}</div>
+      </div>
+      <button class="btn btn-secondary btn-xs" onclick="editConstraint(${c.int_id})">Edit</button>
+      <button class="btn btn-danger btn-xs" onclick="delConstraint(${c.int_id})">✕</button>
+    </div>`;
+  }).join('');
+}
+function getSelectedValues(id){
+  return Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value);
+}
+function constraintPayloadFromForm(){
+  const type=document.getElementById('con-type').value;
+  const scope={
+    division_ids:document.getElementById('con-div').value?[document.getElementById('con-div').value]:[],
+    subject_ids:document.getElementById('con-subj').value?[document.getElementById('con-subj').value]:[],
+    teacher_ids:document.getElementById('con-teacher').value?[document.getElementById('con-teacher').value]:[],
+    room_ids:document.getElementById('con-room').value?[document.getElementById('con-room').value]:[],
+    batch_group_ids:document.getElementById('con-batch-group').value.trim()?[document.getElementById('con-batch-group').value.trim()]:[],
+  };
+  const params={};
+  if(['avoid_day','prefer_day'].includes(type))params.days=getSelectedValues('con-days');
+  if(['avoid_period','prefer_period'].includes(type))params.period_ids=getSelectedValues('con-periods');
+  if(type==='max_per_day')params.max_per_day=+document.getElementById('con-val').value;
+  if(type==='parallel_group'){
+    params.subject_ids=getSelectedValues('con-subject-list');
+    params.slot_type='lecture';
+    if(document.getElementById('con-group-name').value.trim())params.group_name=document.getElementById('con-group-name').value.trim();
+    if(document.getElementById('con-session-count').value)params.session_count=+document.getElementById('con-session-count').value;
+  }
+  return {
+    constraint_type:type,
+    description:document.getElementById('con-desc').value.trim(),
+    target_scope:document.getElementById('con-scope').value,
+    priority:document.getElementById('con-priority').value,
+    weight:+document.getElementById('con-weight').value||10,
+    active:document.getElementById('con-active').checked,
+    scope,params
+  };
+}
+async function previewConstraintValidation(){
+  const desc=document.getElementById('con-desc')?.value.trim();
+  if(!document.getElementById('con-type')||(!desc&&document.getElementById('con-type').value!=='parallel_group')){
+    document.getElementById('con-validate-msg').innerHTML='';return;
+  }
+  const r=await api('/api/constraints/validate',{method:'POST',body:constraintPayloadFromForm()});
+  if(r._ok&&(!r.errors||!r.errors.length))document.getElementById('con-validate-msg').innerHTML='<div class="alert alert-success">Constraint payload looks valid.</div>';
+  else document.getElementById('con-validate-msg').innerHTML=`<div class="alert alert-warn">${(r.errors||['Please complete the required parameters.']).join('<br>')}</div>`;
+}
+function applyConstraintToForm(c){
+  EDITING_CONSTRAINT_ID=c.int_id;document.getElementById('con-edit-id').value=c.int_id;
+  document.getElementById('con-type').value=c.constraint_type;
+  document.getElementById('con-priority').value=c.priority||'hard';
+  document.getElementById('con-weight').value=c.weight||c.penalty_weight||10;
+  document.getElementById('con-scope').value=c.target_scope||'global';
+  document.getElementById('con-desc').value=c.description||'';
+  document.getElementById('con-active').checked=!!c.active;
+  document.getElementById('con-div').value=c.scope?.division_ids?.[0]||'';
+  document.getElementById('con-subj').value=c.scope?.subject_ids?.[0]||'';
+  document.getElementById('con-teacher').value=c.scope?.teacher_ids?.[0]||'';
+  document.getElementById('con-room').value=c.scope?.room_ids?.[0]||'';
+  document.getElementById('con-batch-group').value=c.scope?.batch_group_ids?.[0]||'';
+  Array.from(document.getElementById('con-days').options).forEach(o=>o.selected=(c.params?.days||[]).includes(o.value));
+  Array.from(document.getElementById('con-periods').options).forEach(o=>o.selected=(c.params?.period_ids||[]).includes(o.value));
+  Array.from(document.getElementById('con-subject-list').options).forEach(o=>o.selected=(c.params?.subject_ids||[]).includes(o.value));
+  document.getElementById('con-group-name').value=c.params?.group_name||'';
+  document.getElementById('con-session-count').value=c.params?.session_count||'';
+  document.getElementById('con-val').value=c.params?.max_per_day||1;
+  updateConForm();previewConstraintValidation();
+}
+function editConstraint(id){
+  const constraint=CURRENT_CONSTRAINTS.find(c=>c.int_id===id);
+  if(constraint)applyConstraintToForm(constraint);
+}
+function resetConstraintForm(){
+  EDITING_CONSTRAINT_ID=null;document.getElementById('con-edit-id').value='';
+  document.getElementById('con-priority').value='hard';document.getElementById('con-weight').value=10;
+  document.getElementById('con-scope').value='global';document.getElementById('con-desc').value='';
+  document.getElementById('con-div').value='';document.getElementById('con-subj').value='';document.getElementById('con-teacher').value='';document.getElementById('con-room').value='';document.getElementById('con-batch-group').value='';
+  document.getElementById('con-group-name').value='';document.getElementById('con-session-count').value='';document.getElementById('con-val').value=1;document.getElementById('con-active').checked=true;
+  ['con-days','con-periods','con-subject-list'].forEach(id=>Array.from(document.getElementById(id).options).forEach(o=>o.selected=false));
+  updateConForm();document.getElementById('con-msg').innerHTML='';document.getElementById('con-validate-msg').innerHTML='';
+}
+async function saveConstraint(){
+  const payload=constraintPayloadFromForm();
+  if(!payload.description)return msg('con-msg','Description required','err');
+  const validation=await api('/api/constraints/validate',{method:'POST',body:payload});
+  if(!validation._ok||validation.errors?.length)return msg('con-msg',(validation.errors||['Constraint is invalid']).join(', '),'err');
+  const url=EDITING_CONSTRAINT_ID?`/api/constraints/${EDITING_CONSTRAINT_ID}`:'/api/constraints';
+  const method=EDITING_CONSTRAINT_ID?'PUT':'POST';
+  const r=await api(url,{method,body:payload});
+  if(r._ok){msg('con-msg',r.message,'success');resetConstraintForm();loadConstraints();}else msg('con-msg',r.error||r.message||'Error','err');
+}
+async function delConstraint(id){const r=await api(`/api/constraints/${id}`,{method:'DELETE'});if(r._ok)loadConstraints();}
+
+// ════════════════════════════════════════════════════
+//  CHANGE LOG
+// ════════════════════════════════════════════════════
+async function loadChangelog(){
+  const r=await api('/api/change-log');const tbody=document.getElementById('log-tbody');
+  if(!r._ok||!r.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state">No changes</td></tr>';return;}
+  tbody.innerHTML=r.map((l,i)=>`<tr>
+    <td style="font-family:var(--mono);font-size:11px">${i+1}</td>
+    <td style="font-family:var(--mono);font-size:11px">${(l.created_at||'').slice(11,19)}</td>
+    <td><span class="tag tag-lec">${l.change_type}</span></td>
+    <td style="font-size:12px">${l.description}</td>
+    <td style="font-size:11px;color:var(--muted)">${l.changed_by||'system'}</td>
+    <td><span class="tag ${l.success?'tag-ok':'tag-err'}">${l.success?'OK':'FAIL'}</span></td>
+  </tr>`).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  USERS
+// ════════════════════════════════════════════════════
+async function loadUsers(){
+  const r=await api('/api/users');const tbody=document.getElementById('user-tbody');
+  if(!r._ok||!r.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">No users</td></tr>';return;}
+  tbody.innerHTML=r.map(u=>`<tr>
+    <td>${u.name}</td><td style="font-family:var(--mono);font-size:11px">${u.email}</td>
+    <td><span class="tag ${u.role==='coordinator'?'tag-coord':'tag-fac'}">${u.role}</span></td>
+    <td style="font-family:var(--mono);font-size:11px">${u.teacher_id||'—'}</td>
+    <td><button class="btn btn-secondary btn-xs" onclick="showResetPw(${u.id},'${u.name}')">Reset PW</button></td>
+  </tr>`).join('');
+}
+function showResetPw(uid,name){
+  document.getElementById('pwm-uid').value=uid;document.getElementById('pwm-sub').textContent=`Reset: ${name}`;
+  document.getElementById('pwm-msg').innerHTML='';document.getElementById('pw-modal').classList.remove('hidden');
+}
+async function doResetPassword(){
+  const uid=document.getElementById('pwm-uid').value;const pw=document.getElementById('pwm-pw').value;
+  const r=await api(`/api/users/${uid}/reset-password`,{method:'POST',body:{password:pw}});
+  document.getElementById('pwm-msg').innerHTML=`<div class="alert alert-${r._ok?'success':'err'}">${r._ok?r.message:r.error}</div>`;
+}
+
+// ════════════════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════════════════
+async function loadSettings(){
+  const r=await api('/api/config');if(!r._ok)return;
+  if(r.department_name)document.getElementById('cfg-dept').value=r.department_name;
+  if(r.academic_year)  document.getElementById('cfg-ay').value=r.academic_year;
+  if(r.semester)       document.getElementById('cfg-sem').value=r.semester;
+  document.getElementById('cfg-breaks').value=(r.break_after_periods||['P2','P4']).join(',');
+  const pids=r.period_ids||["P1","P2","P3","P4","P5","P6"];
+  const plabels=r.period_labels||{};
+  const ed=document.getElementById('period-editor');
+  ed.innerHTML=pids.map(pid=>`<div style="display:flex;gap:8px;align-items:center">
+    <input class="input" style="width:65px" value="${pid}" data-type="pid" readonly>
+    <input class="input" placeholder="e.g. 8:00-9:00" value="${plabels[pid]||''}" data-pid="${pid}" data-type="label">
+    <button class="btn btn-danger btn-xs" onclick="this.parentElement.remove()">✕</button>
+  </div>`).join('');
+}
+function addPeriodRow(){
+  const ed=document.getElementById('period-editor');
+  const idx=ed.children.length+1;const div=document.createElement('div');
+  div.style='display:flex;gap:8px;align-items:center';
+  div.innerHTML=`<input class="input" style="width:65px" value="P${idx}" data-type="pid">
+    <input class="input" placeholder="e.g. 15:00-16:00" data-type="label">
+    <button class="btn btn-danger btn-xs" onclick="this.parentElement.remove()">✕</button>`;
+  ed.appendChild(div);
+}
+async function savePeriods(){
+  const rows=document.querySelectorAll('#period-editor > div');
+  const pids=[],plabels={};
+  rows.forEach(row=>{
+    const pid=row.querySelector('[data-type="pid"]').value.trim();
+    const label=row.querySelector('[data-type="label"]').value.trim();
+    if(pid){pids.push(pid);if(label)plabels[pid]=label;}
+  });
+  const r=await api('/api/config',{method:'PUT',body:{period_ids:pids,period_labels:plabels}});
+  msg('settings-msg',r._ok?'Periods saved — regenerate timetable to apply':'Error',r._ok?'success':'err');
+  if(r._ok)await loadMeta();
+}
+async function saveSettings(){
+  const breaks=document.getElementById('cfg-breaks').value.split(',').map(v=>v.trim()).filter(Boolean);
+  const r=await api('/api/config',{method:'PUT',body:{department_name:document.getElementById('cfg-dept').value,academic_year:document.getElementById('cfg-ay').value,semester:document.getElementById('cfg-sem').value,break_after_periods:breaks}});
+  msg('settings-msg',r._ok?'Settings saved':'Error',r._ok?'success':'err');
+  if(r._ok){await loadMeta();const d=document.getElementById('cfg-dept').value;const ay=document.getElementById('cfg-ay').value;const sem=document.getElementById('cfg-sem').value;document.getElementById('dash-dept').textContent=`${d} · ${ay} ${sem}`;}
+}
+async function changePassword(){
+  const old_pw=document.getElementById('pw-old').value;const new_pw=document.getElementById('pw-new').value;
+  if(new_pw.length<6)return msg('pw-msg','Min 6 characters','err');
+  const r=await api('/api/auth/change-password',{method:'POST',body:{old_password:old_pw,new_password:new_pw}});
+  msg('pw-msg',r._ok?'Password changed':r.error||'Error',r._ok?'success':'err');
+  if(r._ok){document.getElementById('pw-old').value='';document.getElementById('pw-new').value='';}
+}
+
+// ════════════════════════════════════════════════════
+//  FACULTY
+// ════════════════════════════════════════════════════
+async function loadFacultySchedule(){
+  const [sched,metaR]=await Promise.all([api('/api/my-schedule'),api('/api/timetable/meta')]);
+  if(metaR._ok)META=metaR;
+  const el=document.getElementById('f-sched-grid');
+  const sub=document.getElementById('f-sched-sub');
+  if(!sched._ok||!sched.length){if(el)el.innerHTML='<div class="empty-state">No classes scheduled yet.</div>';return;}
+  if(sub)sub.textContent=`${sched.length} class periods this week`;
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const pids=META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+  const plabels=META.period_labels||{};
+  const grid={};sched.forEach(s=>{grid[s.day]=grid[s.day]||{};(grid[s.day][s.period_id]=grid[s.day][s.period_id]||[]).push(s);});
+  let html=`<div class="tt-scroll"><table class="tt-table"><thead><tr><th class="day-hdr">Day</th>`;
+  pids.forEach(p=>{html+=`<th>${plabels[p]||p}</th>`;});html+=`</tr></thead><tbody>`;
+  days.forEach(day=>{
+    html+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+    pids.forEach(pid=>{
+      const slots=grid[day]?.[pid]||[];
+      if(slots.length){
+        const s=slots[0];const subj=META.subjects[s.subject_id]||{short_name:s.subject_id};
+        const room=META.rooms[s.room_id]||{name:s.room_id};const col=sc(s.subject_id);
+        html+=`<td><div class="tt-cell ${s.slot_type==='lab'?'sc-lab':col}">
+          <div><div class="tt-top">${subj.short_name}</div><div class="tt-teacher">Div ${s.division_id}${s.batch_id?' · '+s.batch_id:''}</div></div>
+          <div class="tt-bottom"><span class="tt-room">${room.name}</span><span class="tag ${s.slot_type==='lab'?'tag-lab':s.slot_type==='tutorial'?'tag-tut':'tag-lec'}">${s.slot_type.toUpperCase().slice(0,3)}</span></div>
+        </div></td>`;
+      }else{html+=`<td><div class="tt-cell sc-empty"></div></td>`;}
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;if(el)el.innerHTML=html;
+}
+async function loadFacultySchedule(){
+  const [sched,metaR]=await Promise.all([api('/api/my-schedule'),api('/api/timetable/meta')]);
+  if(metaR._ok)META=metaR;
+  const el=document.getElementById('f-sched-grid');
+  const sub=document.getElementById('f-sched-sub');
+  if(!sched._ok||!sched.length){if(el)el.innerHTML='<div class="empty-state">No classes scheduled yet.</div>';return;}
+  if(sub)sub.textContent=`${sched.length} class periods this week`;
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const pids=META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+  const plabels=META.period_labels||{};
+  const grid={};sched.forEach(s=>{grid[s.day]=grid[s.day]||{};(grid[s.day][s.period_id]=grid[s.day][s.period_id]||[]).push(s);});
+  let html=`<div class="tt-scroll"><table class="tt-table"><thead><tr><th class="day-hdr">Day</th>`;
+  pids.forEach(pid=>{html+=`<th>${plabels[pid]||pid}</th>`;});
+  html+=`</tr></thead><tbody>`;
+  days.forEach(day=>{
+    html+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+    pids.forEach(pid=>{
+      const slots=grid[day]?.[pid]||[];
+      html+=slots.length?`<td>${renderSlotCards(slots,{facultyView:true})}</td>`:`<td><div class="tt-empty">Free</div></td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  if(el)el.innerHTML=html;
+}
+async function loadNotifications(){
+  const r=await api('/api/notifications');
+  const badge=document.getElementById('notif-badge');
+  if(badge){const unread=r._ok?r.filter(n=>!n.is_read).length:0;badge.textContent=unread;badge.classList.toggle('hidden',unread===0);}
+  const el=document.getElementById('f-notif-list');if(!el)return;
+  if(!r._ok||!r.length){el.innerHTML='<div class="empty-state">No notifications</div>';return;}
+  el.innerHTML=r.map(n=>{
+    const d=typeof n.data==='string'?JSON.parse(n.data||'{}'):(n.data||{});
+    const nid=n.int_id||n.id;
+    const isFree=n.type==='slot_free';
+    const periodLabel=(d.period_ids&&d.period_ids.length>1)?`${d.period_ids[0]}-${d.period_ids[d.period_ids.length-1]}`:(d.period_id||'');
+    const freeFaculty=(d.candidate_teachers||[]).map(t=>t.teacher_name).join(', ');
+    const batchInfo=(d.batch_assignments||[]).map(item=>{
+      const subj=META.subjects[item.subject_id]||{short_name:item.subject_id||''};
+      const teacher=(META.teachers[item.teacher_id]||{short_name:item.teacher_id}).short_name;
+      const parts=[item.batch_id];
+      if(item.subject_id)parts.push(subj.short_name||item.subject_id);
+      if(item.teacher_id)parts.push(teacher);
+      return parts.join(':');
+    }).join(', ');
+    return`<div class="notif-card ${n.is_read?'':'unread'} ${n.type}">
+      <div class="notif-title">${n.title}</div>
+      <div class="notif-msg">${n.message}</div>
+      ${isFree&&d.session_id?`
+        <div class="notif-slot-info">
+          <span>📚 ${d.subject_name||d.subject_id}</span>
+          <span>🏷️ Div ${d.division_id}</span>
+          <span>📅 ${d.day} ${periodLabel}</span>
+          <span>🏫 ${(d.room_ids||[]).join(', ')||d.room_id||'TBA'}</span>
+        </div>
+        ${batchInfo?`<div class="notif-meta">Batch cover: ${batchInfo}</div>`:''}
+        <div class="notif-meta">${freeFaculty?`Free faculty: ${freeFaculty}`:'No free faculty suggestions yet'}</div>
+        <div class="notif-actions">
+          <button class="btn btn-success btn-sm" onclick="claimSlot(${nid})">✋ Claim This Class</button>
+          <button class="btn btn-ghost btn-sm" onclick="markRead(${nid})">Dismiss</button>
+        </div>`:
+        `<div class="notif-meta">${(n.created_at||'').slice(0,16)}</div>`}
+    </div>`;
+  }).join('');
+}
+async function pollNotifications(){
+  const r=await api('/api/notifications/unread-count');if(!r._ok)return;
+  const badge=document.getElementById('notif-badge');
+  if(badge){badge.textContent=r.count;badge.classList.toggle('hidden',r.count===0);}
+}
+async function claimSlot(nid){
+  const r=await api(`/api/notifications/${nid}/claim`,{method:'POST'});
+  alert(r._ok?'✓ '+r.message:'✗ '+(r.error||r.message||'Could not claim'));
+  loadNotifications();if(r._ok)loadFacultySchedule();
+}
+async function markRead(nid){await api(`/api/notifications/${nid}/read`,{method:'POST'});loadNotifications();}
+async function markAllRead(){await api('/api/notifications/mark-all-read',{method:'POST'});loadNotifications();}
+async function doFacultyAbsent(){
+  const day=document.getElementById('fa-day').value;
+  const period=document.getElementById('fa-period').value||undefined;
+  const r=await api('/api/teacher-absent',{method:'POST',body:{day,period_id:period}});
+  const opened=r.opened_sessions?.length||0;
+  msg('fa-msg',r.message||(opened?`${opened} session(s) opened for cover`:(r.success?'Done':'Error')),r.success?'success':'err');
+}
+async function doFacultyChangePassword(){
+  const old_pw=document.getElementById('fpw-old').value;const new_pw=document.getElementById('fpw-new').value;
+  if(new_pw.length<6)return msg('fpw-msg','Min 6 characters','err');
+  const r=await api('/api/auth/change-password',{method:'POST',body:{old_password:old_pw,new_password:new_pw}});
+  msg('fpw-msg',r._ok?'Password changed':r.error||'Error',r._ok?'success':'err');
+  if(r._ok){document.getElementById('fpw-old').value='';document.getElementById('fpw-new').value='';}
+}
+
+// ════════════════════════════════════════════════════
+//  UTILS
+// ════════════════════════════════════════════════════
+function escHtml(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function renderTimetableProblems(data){
+  const el=document.getElementById('tt-problem-panel');
+  if(!el)return;
+  if(!data||!data._ok){
+    el.innerHTML='';
+    return;
+  }
+  const diagnostics=data.diagnostics||[];
+  const unscheduled=data.unscheduled||[];
+  const suggestions=data.suggestions||[];
+  if(!diagnostics.length&&!unscheduled.length){
+    el.innerHTML='<div class="alert alert-success">Feasible: all scheduled sessions pass conflict and coverage checks.</div>';
+    return;
+  }
+  const rows=[];
+  diagnostics.slice(0,10).forEach(item=>{
+    rows.push(`<div><strong>${escHtml(item.code||'problem')}</strong>: ${escHtml(item.message||'Timetable problem detected')}</div>`);
+  });
+  unscheduled.slice(0,10).forEach(item=>{
+    rows.push(`<div><strong>${escHtml(item.display_name||item.request_id||'unscheduled')}</strong>: ${escHtml(item.reason||'Could not be scheduled')}</div>`);
+  });
+  const hiddenCount=Math.max(0,diagnostics.length+unscheduled.length-rows.length);
+  if(hiddenCount)rows.push(`<div>${hiddenCount} more problem(s) hidden.</div>`);
+  const suggestionHtml=suggestions.length
+    ? `<div style="margin-top:8px;font-weight:600">Suggested Fix</div>${suggestions.slice(0,4).map(s=>`<div>${escHtml(s)}</div>`).join('')}`
+    : '';
+  el.innerHTML=`<div class="alert alert-warn"><div style="font-weight:600;margin-bottom:6px">Timetable Problems</div>${rows.join('')}${suggestionHtml}</div>`;
+}
+function parseSlotIds(value){
+  try{return JSON.parse(value||'[]').map(Number).filter(Boolean);}
+  catch(_){return [];}
+}
+function cellSlotIds(cells){
+  return JSON.stringify([...new Set((cells||[]).map(slot=>slot.int_id||slot.id).filter(Boolean))]).replace(/"/g,'&quot;');
+}
+function startTimetableDrag(event, slotIdsJson, day, periodId){
+  if(USER?.role!=='coordinator')return;
+  try{
+    TT_DRAG={slot_ids:parseSlotIds(slotIdsJson), day, period_id:periodId};
+    event.dataTransfer.effectAllowed='move';
+    event.dataTransfer.setData('text/plain', slotIdsJson);
+    event.currentTarget.classList.add('tt-dragging');
+  }catch(_){}
+}
+function endTimetableDrag(event){
+  event.currentTarget.classList.remove('tt-dragging');
+}
+function allowTimetableDrop(event){
+  if(USER?.role!=='coordinator'||!TT_DRAG)return;
+  event.preventDefault();
+  event.currentTarget.classList.add('tt-drop-target');
+}
+function clearTimetableDrop(event){
+  event.currentTarget.classList.remove('tt-drop-target');
+}
+async function handleTimetableDrop(event, divisionId, day, periodId){
+  event.preventDefault();
+  event.stopPropagation();
+  event.currentTarget.classList.remove('tt-drop-target');
+  if(USER?.role!=='coordinator'||!TT_DRAG)return;
+  const drag=TT_DRAG;
+  TT_DRAG=null;
+  const targetSlotIds=parseSlotIds(event.currentTarget.dataset.slotIds);
+  if(drag.day===day&&drag.period_id===periodId)return;
+  if(!drag.slot_ids.length)return msg('tt-msg','Could not read the dragged session','err');
+  let r;
+  if(targetSlotIds.length){
+    const payload={slot_id_1:drag.slot_ids[0],slot_id_2:targetSlotIds[0]};
+    const feasible=await api('/api/slots/validate-swap',{method:'POST',body:payload});
+    if(!feasible._ok)return msg('tt-msg',`Not feasible: ${feasible.message||feasible.error}`,'err');
+    msg('tt-msg','Feasible. Applying swap...','info');
+    r=await api('/api/slots/swap',{method:'POST',body:payload});
+  }else{
+    const payload={slot_ids:drag.slot_ids,day,period_id:periodId};
+    const feasible=await api('/api/slots/validate-cell-move',{method:'POST',body:payload});
+    if(!feasible._ok)return msg('tt-msg',`Not feasible: ${feasible.message||feasible.error}`,'err');
+    msg('tt-msg','Feasible. Moving session...','info');
+    r=await api('/api/slots/cell-move',{method:'POST',body:payload});
+  }
+  msg('tt-msg',r.message||r.error,r._ok?'success':'err');
+  if(r._ok){
+    await loadAndRenderTimetable();
+    if(document.getElementById('mv-div')?.value)loadSlots('mv');
+    if(document.getElementById('sw-div')?.value)loadSlots('sw');
+    if(document.getElementById('rt-div')?.value)loadSlots('rt');
+  }else{
+    const problems=await api('/api/timetable/problems');
+    renderTimetableProblems(problems);
+  }
+}
+function renderGenerationDiagnostics(r){
+  const el=document.getElementById('gen-error-panel');if(!el)return;
+  const diag=r?.diagnostic||r?.result?.diagnostic;
+  const gaps=r?.coverage_report?.gaps||r?.result?.coverage_report?.gaps||[];
+  const unscheduled=r?.unscheduled||r?.result?.unscheduled||[];
+  const partial=!!(r?.partial||r?.result?.partial);
+  const items=[];
+  if(diag)items.push(`<strong>${diag.code||'generation_error'}</strong>: ${diag.message||r.error||'Generation failed'}`);
+  gaps.slice(0,4).forEach(g=>items.push(g.message));
+  unscheduled.slice(0,8).forEach(item=>items.push(`<strong>${item.display_name||item.request_id}</strong>: ${item.reason}`));
+  const title=partial?'Partial Timetable Draft':'Generation Details';
+  const intro=partial?'<div style="margin-bottom:6px">The generator saved the valid sessions it could place. Unscheduled items are listed below so you can relax constraints or move slots manually.</div>':'';
+  el.innerHTML=items.length?`<div class="alert ${partial?'alert-warn':'alert-err'}" style="margin-top:12px"><div style="font-weight:600;margin-bottom:6px">${title}</div>${intro}${items.map(i=>`<div style="margin-top:4px">${i}</div>`).join('')}</div>`:'';
+}
+async function monitorGenerationJob(jobId){
+  if(!jobId)return;
+  if(GENERATION_MONITORING&&ACTIVE_GENERATION_JOB_ID===jobId)return;
+  GENERATION_MONITORING=true;
+  ACTIVE_GENERATION_JOB_ID=jobId;
+  try{
+    while(true){
+      const job=await api(`/api/generate/jobs/${jobId}`);
+      if(!job._ok){
+        msg('gen-msg',job.error||'Could not load generation progress','err');
+        renderGenerationProgress(null);
+        break;
+      }
+      renderGenerationProgress(job);
+      setGenerateButtonBusy(job.status!=='completed'&&job.status!=='failed',generationStageLabel(job.stage||'queued'));
+      if(job.status==='completed'){
+        document.getElementById('gen-error-panel').innerHTML='';
+        if(job.partial){
+          msg('gen-msg',`${job.message||'Partial timetable generated'} (${(job.elapsed_seconds||0).toFixed(3)}s)`,'warn');
+          renderGenerationDiagnostics(job);
+        }else{
+          msg('gen-msg',`${job.message||'Generation completed'} (${(job.elapsed_seconds||0).toFixed(3)}s)`,'success');
+        }
+        await loadDashboard();
+        await loadAndRenderTimetable();
+        renderGenerationProgress(job);
+        break;
+      }
+      if(job.status==='failed'){
+        msg('gen-msg',`${job.message||'Generation failed'} (${(job.elapsed_seconds||0).toFixed(3)}s)`,'err');
+        renderGenerationDiagnostics(job.result||job);
+        break;
+      }
+      await sleep(1000);
+    }
+  }finally{
+    GENERATION_MONITORING=false;
+    ACTIVE_GENERATION_JOB_ID=null;
+    setGenerateButtonBusy(false);
+  }
+}
+async function doGenerate(){
+  if(GENERATION_MONITORING&&ACTIVE_GENERATION_JOB_ID){
+    msg('gen-msg','Generation is already running. Live stage updates are shown below.','info');
+    return;
+  }
+  setGenerateButtonBusy(true,'Starting...');
+  msg('gen-msg','Starting timetable generation job...','info');
+  document.getElementById('gen-error-panel').innerHTML='';
+  const r=await api('/api/generate/start',{method:'POST',body:{allow_partial:true}});
+  if(!r._ok){
+    setGenerateButtonBusy(false);
+    msg('gen-msg',r.error||'Could not start generation','err');
+    renderGenerationDiagnostics(r);
+    return;
+  }
+  const job=r.job||r;
+  ACTIVE_GENERATION_JOB_ID=job?.job_id||null;
+  renderGenerationProgress(job);
+  await monitorGenerationJob(ACTIVE_GENERATION_JOB_ID);
+}
+function renderTimetable(){
+  const divSel=document.getElementById('tt-div');
+  if(!divSel)return;
+  const selectedDiv=divSel.value;
+  const divs=selectedDiv?[selectedDiv]:Object.keys(TT);
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const displayPeriods=buildDisplayPeriods();
+  const orientation=getTimetableOrientation();
+  const boards=[];
+  for(const did of divs){
+    if(!TT[did])continue;
+    const div=META.divisions[did]||{name:did};
+    const totalSessions=countDivisionSessions(did);
+    let table=`<div class="tt-scroll"><table class="tt-table"><thead><tr>`;
+    if(orientation==='days_vertical'){
+      table+=`<th class="day-hdr">Day</th>`;
+      displayPeriods.forEach(period=>{table+=`<th>${period.label}</th>`;});
+      table+=`</tr></thead><tbody>`;
+      for(const day of days){
+        table+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+        for(const period of displayPeriods){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const cells=TT[did]?.[day]?.[period.id]||[];
+          const dragAttrs=(USER?.role==='coordinator'&&cells.length)?` draggable="true" ondragstart="startTimetableDrag(event, this.dataset.slotIds, '${day}', '${period.id}')" ondragend="endTimetableDrag(event)"`:'';
+          const dropAttrs=USER?.role==='coordinator'?` ondragover="allowTimetableDrop(event)" ondragleave="clearTimetableDrop(event)" ondrop="handleTimetableDrop(event, '${did}', '${day}', '${period.id}')"`:'';
+          table+=cells.length
+            ? `<td class="tt-clickable tt-draggable" data-slot-ids="${cellSlotIds(cells)}" data-slots="${cellPayload(cells)}"${dragAttrs}${dropAttrs} onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td${dropAttrs}><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }else{
+      table+=`<th class="day-hdr">Time</th>`;
+      for(const day of days){table+=`<th>${day.substring(0,3)}</th>`;}
+      table+=`</tr></thead><tbody>`;
+      for(const period of displayPeriods){
+        table+=`<tr><td class="tt-day">${period.label}</td>`;
+        for(const day of days){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const cells=TT[did]?.[day]?.[period.id]||[];
+          const dragAttrs=(USER?.role==='coordinator'&&cells.length)?` draggable="true" ondragstart="startTimetableDrag(event, this.dataset.slotIds, '${day}', '${period.id}')" ondragend="endTimetableDrag(event)"`:'';
+          const dropAttrs=USER?.role==='coordinator'?` ondragover="allowTimetableDrop(event)" ondragleave="clearTimetableDrop(event)" ondrop="handleTimetableDrop(event, '${did}', '${day}', '${period.id}')"`:'';
+          table+=cells.length
+            ? `<td class="tt-clickable tt-draggable" data-slot-ids="${cellSlotIds(cells)}" data-slots="${cellPayload(cells)}"${dragAttrs}${dropAttrs} onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td${dropAttrs}><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }
+    table+=`</tbody></table></div>`;
+    boards.push(`<section class="tt-board">
+      <div class="tt-board-head">
+        <div>
+          <div class="tt-board-kicker">Division ${did}</div>
+          <div class="tt-board-title">${div.name||did}</div>
+        </div>
+        <div class="tt-board-meta">${totalSessions} scheduled sessions · ${days.length} days</div>
+      </div>
+      ${table}
+    </section>`);
+  }
+  document.getElementById('tt-container').innerHTML=boards.length?`<div class="tt-shell">${boards.join('')}</div>`:'<div class="empty-state">No timetable generated yet.</div>';
+}
+function getLabRenderInfo(divisionId,day,periodId){
+  const cells=getTimetableCellSlots(divisionId,day,periodId);
+  const key=labGroupKey(cells);
+  const periodIds=getPeriodIds();
+  const idx=periodIds.indexOf(periodId);
+  if(!key||idx<0)return {cells,skip:false,span:1};
+  if(idx>0){
+    const prevPid=periodIds[idx-1];
+    if(labGroupKey(getTimetableCellSlots(divisionId,day,prevPid))===key)return {cells,skip:true,span:0};
+  }
+  let span=1;
+  if(idx<periodIds.length-1){
+    const nextPid=periodIds[idx+1];
+    if(labGroupKey(getTimetableCellSlots(divisionId,day,nextPid))===key)span=2;
+  }
+  return {cells,skip:false,span};
+}
+function renderTimetable(){
+  const divSel=document.getElementById('tt-div');
+  if(!divSel)return;
+  const selectedDiv=divSel.value;
+  const divs=selectedDiv?[selectedDiv]:Object.keys(TT);
+  const days=META.days.length?META.days:["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const displayPeriods=buildDisplayPeriods();
+  const orientation=getTimetableOrientation();
+  const boards=[];
+  for(const did of divs){
+    if(!TT[did])continue;
+    const div=META.divisions[did]||{name:did};
+    const totalSessions=countDivisionSessions(did);
+    let table=`<div class="tt-scroll"><table class="tt-table"><thead><tr>`;
+    if(orientation==='days_vertical'){
+      table+=`<th class="day-hdr">Day</th>`;
+      displayPeriods.forEach(period=>{table+=`<th>${period.label}</th>`;});
+      table+=`</tr></thead><tbody>`;
+      for(const day of days){
+        table+=`<tr><td class="tt-day">${day.substring(0,3)}</td>`;
+        for(const period of displayPeriods){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const info=getLabRenderInfo(did,day,period.id);
+          if(info.skip)continue;
+          const cells=info.cells;
+          const dragAttrs=(USER?.role==='coordinator'&&cells.length)?` draggable="true" ondragstart="startTimetableDrag(event, this.dataset.slotIds, '${day}', '${period.id}')" ondragend="endTimetableDrag(event)"`:'';
+          const dropAttrs=USER?.role==='coordinator'?` ondragover="allowTimetableDrop(event)" ondragleave="clearTimetableDrop(event)" ondrop="handleTimetableDrop(event, '${did}', '${day}', '${period.id}')"`:'';
+          const spanAttr=info.span>1?` colspan="${info.span}"`:'';
+          table+=cells.length
+            ? `<td${spanAttr} class="tt-clickable tt-draggable" data-slot-ids="${cellSlotIds(cells)}" data-slots="${cellPayload(cells)}"${dragAttrs}${dropAttrs} onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td${dropAttrs}><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }else{
+      table+=`<th class="day-hdr">Time</th>`;
+      for(const day of days){table+=`<th>${day.substring(0,3)}</th>`;}
+      table+=`</tr></thead><tbody>`;
+      for(const period of displayPeriods){
+        table+=`<tr><td class="tt-day">${period.label}</td>`;
+        for(const day of days){
+          if(period.isBreak){
+            table+=`<td><div class="tt-break-cell">${period.label}</div></td>`;
+            continue;
+          }
+          const info=getLabRenderInfo(did,day,period.id);
+          if(info.skip)continue;
+          const cells=info.cells;
+          const dragAttrs=(USER?.role==='coordinator'&&cells.length)?` draggable="true" ondragstart="startTimetableDrag(event, this.dataset.slotIds, '${day}', '${period.id}')" ondragend="endTimetableDrag(event)"`:'';
+          const dropAttrs=USER?.role==='coordinator'?` ondragover="allowTimetableDrop(event)" ondragleave="clearTimetableDrop(event)" ondrop="handleTimetableDrop(event, '${did}', '${day}', '${period.id}')"`:'';
+          const spanAttr=info.span>1?` rowspan="${info.span}"`:'';
+          table+=cells.length
+            ? `<td${spanAttr} class="tt-clickable tt-draggable" data-slot-ids="${cellSlotIds(cells)}" data-slots="${cellPayload(cells)}"${dragAttrs}${dropAttrs} onclick="openSlotModal(JSON.parse(this.dataset.slots))">${renderSlotCards(cells)}</td>`
+            : `<td${dropAttrs}><div class="tt-empty">Available</div></td>`;
+        }
+        table+=`</tr>`;
+      }
+    }
+    table+=`</tbody></table></div>`;
+    boards.push(`<section class="tt-board">
+      <div class="tt-board-head">
+        <div>
+          <div class="tt-board-kicker">Division ${did}</div>
+          <div class="tt-board-title">${div.name||did}</div>
+        </div>
+        <div class="tt-board-meta">${totalSessions} scheduled sessions · ${days.length} days</div>
+      </div>
+      ${table}
+    </section>`);
+  }
+  document.getElementById('tt-container').innerHTML=boards.length?`<div class="tt-shell">${boards.join('')}</div>`:'<div class="empty-state">No timetable generated yet.</div>';
+}
+function getPeriodIds(){
+  return META.period_ids.length?META.period_ids:["P1","P2","P3","P4","P5","P6"];
+}
+function periodLabel(periodId){
+  const labels=META.period_labels||{};
+  return labels[periodId]||periodId;
+}
+function getTimetableCellSlots(divisionId,day,periodId){
+  return (TT[divisionId]?.[day]?.[periodId]||[]).map(slot=>({division_id:divisionId,day,period_id:periodId,...slot}));
+}
+function isLabOnlyCell(cells){
+  return Array.isArray(cells)&&cells.length>0&&cells.every(slot=>slot.slot_type==='lab');
+}
+function labGroupKey(cells){
+  if(!isLabOnlyCell(cells))return '';
+  return [...new Set(cells.map(slot=>slot.session_id||slot.id||slot.int_id).filter(Boolean))].sort().join('|');
+}
+function getLabBlockStartPeriodId(slots){
+  const list=Array.isArray(slots)?slots:[];
+  const first=list[0];
+  if(!first)return '';
+  const key=labGroupKey(list);
+  const periodIds=getPeriodIds();
+  let idx=periodIds.indexOf(first.period_id);
+  if(!key||idx<0)return first.period_id;
+  while(idx>0){
+    const prevPid=periodIds[idx-1];
+    if(labGroupKey(getTimetableCellSlots(first.division_id,first.day,prevPid))!==key)break;
+    idx-=1;
+  }
+  return periodIds[idx]||first.period_id;
+}
+function getLabBlockPeriodIds(slots){
+  const list=Array.isArray(slots)?slots:[];
+  const first=list[0];
+  if(!first)return [];
+  const key=labGroupKey(list);
+  const periodIds=getPeriodIds();
+  const startPid=getLabBlockStartPeriodId(list);
+  const startIdx=periodIds.indexOf(startPid);
+  if(!key||startIdx<0)return [first.period_id];
+  const out=[startPid];
+  if(startIdx<periodIds.length-1){
+    const nextPid=periodIds[startIdx+1];
+    if(labGroupKey(getTimetableCellSlots(first.division_id,first.day,nextPid))===key)out.push(nextPid);
+  }
+  return out;
+}
+function getLabBlockPeriodLabel(slots){
+  const ids=getLabBlockPeriodIds(slots);
+  const labels=ids.map(pid=>periodLabel(pid));
+  return labels.length>1?`${labels[0]} - ${labels[1]}`:(labels[0]||'');
+}
+function getLabRenderInfo(divisionId,day,periodId){
+  const cells=getTimetableCellSlots(divisionId,day,periodId);
+  const key=labGroupKey(cells);
+  const periodIds=getPeriodIds();
+  const idx=periodIds.indexOf(periodId);
+  if(!key||idx<0)return {cells,skip:false,span:1};
+  if(idx>0){
+    const prevPid=periodIds[idx-1];
+    if(labGroupKey(getTimetableCellSlots(divisionId,day,prevPid))===key)return {cells,skip:true,span:0};
+  }
+  let span=1;
+  if(idx<periodIds.length-1){
+    const nextPid=periodIds[idx+1];
+    if(labGroupKey(getTimetableCellSlots(divisionId,day,nextPid))===key)span=2;
+  }
+  return {cells,skip:false,span};
+}
+function renderLabCard(cells,options={}){
+  const facultyView=!!options.facultyView;
+  const list=[...(cells||[])].sort((a,b)=>batchLabel(a.batch_id).localeCompare(batchLabel(b.batch_id)));
+  const first=list[0];
+  if(!first)return '<div class="tt-empty">Available</div>';
+  const subjectNames=[...new Set(list.map(slot=>(META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id}).short_name))].sort();
+  const periodText=getLabBlockPeriodLabel(list)||'2-hour lab block';
+  const locked=list.some(slot=>slot.is_locked);
+  const needsCover=list.some(slot=>slot.status==='open_cover');
+  const assignments=list.map(slot=>{
+    const subj=META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const left=facultyView
+      ? `Division ${slot.division_id}${slot.batch_id?` - ${batchLabel(slot.batch_id)}`:''}`
+      : (batchLabel(slot.batch_id)||'Batch');
+    const right=facultyView
+      ? `${subj.short_name} - ${room.name||'TBD'}`
+      : `${subj.short_name} - ${tchr.short_name||tchr.name||'Cover Needed'} - ${room.name||'TBD'}`;
+    return `<div class="tt-lab-assignment"><span>${left}</span><span>${right}</span></div>`;
+  }).join('');
+  const badges=[
+    '<span class="tag tag-lab">LAB</span>',
+    needsCover?'<span class="tag tag-err">OPEN</span>':''
+  ].join('');
+  return `<div class="tt-slot-stack"><article class="tt-slot-card sc-lab">
+    <div class="tt-slot-head">
+      <div class="tt-slot-title-row">
+        <div class="tt-top">${subjectNames.join(' / ')} Lab</div>
+        ${locked?'<span class="tt-pin">Lock</span>':''}
+      </div>
+      <div class="tt-lab-summary">${periodText} - ${list.length} ${list.length===1?'batch':'batches'}</div>
+    </div>
+    <div class="tt-lab-assignments">${assignments}</div>
+    <div class="tt-meta">
+      <span class="tt-room">${facultyView?(META.divisions[first.division_id]?.name||first.division_id):(subjectNames.length>1?'Parallel Batch Labs':'Grouped Lab Block')}</span>
+      <span class="tt-badges">${badges}</span>
+    </div>
+  </article></div>`;
+}
+function renderSlotCards(cells,options={}){
+  const facultyView=!!options.facultyView;
+  if(isLabOnlyCell(cells))return renderLabCard(cells,options);
+  return `<div class="tt-slot-stack">`+cells.map(slot=>{
+    const subj=META.subjects[slot.subject_id]||{short_name:slot.subject_id,name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{short_name:'OPEN',name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const typeTag=slot.slot_type==='lab'?'LAB':slot.slot_type==='tutorial'?'TUT':'LEC';
+    const teacherLine=facultyView
+      ? `Division ${slot.division_id}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`
+      : `${tchr.short_name||tchr.name||'Cover Needed'}${slot.batch_id?` · ${batchLabel(slot.batch_id)}`:''}`;
+    const badges=[
+      `<span class="tag ${slot.slot_type==='lab'?'tag-lab':slot.slot_type==='tutorial'?'tag-tut':'tag-lec'}">${typeTag}</span>`,
+      slot.parallel_group_id?`<span class="tag tag-amber">PAR</span>`:'',
+      slot.status==='open_cover'?`<span class="tag tag-err">OPEN</span>`:''
+    ].join('');
+    return `<article class="tt-slot-card ${slot.slot_type==='lab'?'sc-lab':slot.status==='open_cover'?'sc-2':sc(slot.subject_id)}">
+      <div class="tt-slot-head">
+        <div class="tt-slot-title-row">
+          <div class="tt-top">${subj.short_name}${slot.slot_type==='lab'?' Lab':''}</div>
+          ${slot.is_locked?'<span class="tt-pin">Lock</span>':''}
+        </div>
+        <div class="tt-teacher">${teacherLine}</div>
+      </div>
+      <div class="tt-meta">
+        <span class="tt-room">${room.name||'TBD'}</span>
+        <span class="tt-badges">${badges}</span>
+      </div>
+    </article>`;
+  }).join('')+`</div>`;
+}
+function openSlotModal(slots){
+  const list=Array.isArray(slots)?slots:[slots];
+  const first=list[0];
+  if(!first)return;
+  const isLabGroup=isLabOnlyCell(list);
+  document.getElementById('sm-title').textContent=isLabGroup?'Lab Block Details':(list.length>1?'Parallel / Grouped Sessions':'Session Details');
+  document.getElementById('sm-sub').textContent=`${first.day} ${isLabGroup?getLabBlockPeriodLabel(list):periodLabel(first.period_id)} - Division ${first.division_id}`;
+  let body=`<div style="display:flex;flex-direction:column;gap:12px">`;
+  if(isLabGroup){
+    const subjectNames=[...new Set(list.map(slot=>(META.subjects[slot.subject_id]||{name:slot.subject_id}).name))].sort();
+    const assignments=[...list].sort((a,b)=>batchLabel(a.batch_id).localeCompare(batchLabel(b.batch_id))).map(slot=>{
+      const subj=META.subjects[slot.subject_id]||{name:slot.subject_id};
+      const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+      const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+      return `<div class="tt-lab-assignment"><span>${batchLabel(slot.batch_id)||'Batch'}</span><span>${subj.name} - ${tchr.name||'Cover Needed'} - ${room.name||'TBD'}</span></div>`;
+    }).join('');
+    body+=`<div class="card" style="padding:14px">
+      ${IR(subjectNames.length>1?'Subjects':'Subject',subjectNames.join(' / '))}${IR('Type','LAB')}${IR('Duration',getLabBlockPeriodLabel(list))}${IR('Batches',String(list.length))}
+      <div style="margin-top:12px" class="tt-lab-assignments">${assignments}</div>
+      ${list.some(slot=>slot.status==='open_cover')?'<div class="alert alert-warn" style="margin-top:10px">Cover needed for one or more lab batches</div>':''}
+      ${list.some(slot=>slot.is_locked)?'<div class="alert alert-warn" style="margin-top:10px">This lab block contains locked slots</div>':''}
+    </div>`;
+    body+=`</div>`;
+    document.getElementById('sm-body').innerHTML=body;
+    document.getElementById('slot-modal').classList.remove('hidden');
+    return;
+  }
+  list.forEach(slot=>{
+    const subj=META.subjects[slot.subject_id]||{name:slot.subject_id};
+    const tchr=META.teachers[slot.teacher_id]||{name:'Cover Needed'};
+    const room=META.rooms[slot.room_id]||{name:slot.room_id||'TBD'};
+    const slotId=slot.int_id||slot.id;
+    body+=`<div class="card" style="padding:14px">
+      ${IR('Subject',subj.name)}${IR('Type',slot.slot_type.toUpperCase())}${IR('Teacher',tchr.name||'Cover Needed')}${IR('Room',room.name)}
+      ${slot.batch_id?IR('Batch',batchLabel(slot.batch_id)):''}
+      ${slot.parallel_group_id?IR('Parallel',slot.parallel_group_id):''}
+      ${slot.status==='open_cover'?'<div class="alert alert-warn" style="margin-top:8px">Cover needed for this slot</div>':''}
+      ${slot.is_locked?'<div class="alert alert-warn" style="margin-top:8px">Locked - cannot be moved</div>':''}
+      ${USER?.role==='coordinator'&&slotId?`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="lockSlot(${slotId},${!slot.is_locked})">${slot.is_locked?'Unlock':'Lock'}</button></div>`:''}
+    </div>`;
+  });
+  body+=`</div>`;
+  document.getElementById('sm-body').innerHTML=body;
+  document.getElementById('slot-modal').classList.remove('hidden');
+}
+function msg(elId,text,type='info'){
+  const el=document.getElementById(elId);if(!el)return;
+  const cls={success:'alert-success',err:'alert-err',info:'alert-info',warn:'alert-warn'}[type]||'alert-info';
+  el.innerHTML=`<div class="alert ${cls}">${text}</div>`;
+  if(type!=='err')setTimeout(()=>{el.innerHTML='';},7000);
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
