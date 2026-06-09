@@ -119,3 +119,7 @@ Batch names appear in:
 | `change_log` | Audit trail |
 | `config` | System config (periods, days, etc.) |
 | `sequences` | Auto-increment counters |
+
+
+<img width="844" height="887" alt="Time" src="https://github.com/user-attachments/assets/5cbee799-4fdb-49e2-b7b9-16b2f64afdf4" />
+
